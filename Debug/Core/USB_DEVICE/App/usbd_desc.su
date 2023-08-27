@@ -1,0 +1,9 @@
+../Core/USB_DEVICE/App/usbd_desc.c:261:11:USBD_HS_DeviceDescriptor	16	static
+../Core/USB_DEVICE/App/usbd_desc.c:274:11:USBD_HS_LangIDStrDescriptor	16	static
+../Core/USB_DEVICE/App/usbd_desc.c:287:11:USBD_HS_ProductStrDescriptor	16	static
+../Core/USB_DEVICE/App/usbd_desc.c:306:11:USBD_HS_ManufacturerStrDescriptor	16	static
+../Core/USB_DEVICE/App/usbd_desc.c:319:11:USBD_HS_SerialStrDescriptor	16	static
+../Core/USB_DEVICE/App/usbd_desc.c:340:11:USBD_HS_ConfigStrDescriptor	16	static
+../Core/USB_DEVICE/App/usbd_desc.c:359:11:USBD_HS_InterfaceStrDescriptor	16	static
+../Core/USB_DEVICE/App/usbd_desc.c:392:13:Get_SerialNum	24	static
+../Core/USB_DEVICE/App/usbd_desc.c:416:13:IntToUnicode	32	static

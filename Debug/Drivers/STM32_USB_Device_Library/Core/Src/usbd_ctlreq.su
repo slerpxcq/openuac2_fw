@@ -1,0 +1,15 @@
+D:/Documents/ST/STM32CubeIDE/workspace/f446_usb_audio/Drivers/STM32_USB_Device_Library/Core/Inc/usbd_def.h:417:26:SWAPBYTE	32	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:102:20:USBD_StdDevReq	24	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:165:20:USBD_StdItfReq	24	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:237:20:USBD_StdEPReq	24	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:426:13:USBD_GetDescriptor	24	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:682:13:USBD_SetAddress	24	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:723:27:USBD_SetConfig	24	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:814:13:USBD_GetConfig	16	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:848:13:USBD_GetStatus	16	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:889:13:USBD_SetFeature	16	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:915:13:USBD_ClrFeature	16	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:943:6:USBD_ParseSetupRequest	24	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:972:6:USBD_CtlError	16	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:989:6:USBD_GetString	32	static
+../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c:1025:16:USBD_GetLen	24	static

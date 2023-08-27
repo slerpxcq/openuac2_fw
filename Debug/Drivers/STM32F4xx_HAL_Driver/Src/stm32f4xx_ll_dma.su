@@ -1,0 +1,14 @@
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h:514:22:LL_DMA_DisableStream	16	static
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h:569:22:LL_DMA_ConfigTransfer	24	static
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h:968:22:LL_DMA_SetDataLength	24	static
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h:1019:22:LL_DMA_SetChannelSelection	24	static
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h:1072:22:LL_DMA_SetMemoryBurstxfer	24	static
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h:1121:22:LL_DMA_SetPeriphBurstxfer	24	static
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h:1374:22:LL_DMA_ConfigFifo	24	static
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h:1436:22:LL_DMA_SetMemoryAddress	24	static
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h:1459:22:LL_DMA_SetPeriphAddress	24	static
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_bus.h:582:22:LL_AHB1_GRP1_ForceReset	16	static
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_bus.h:631:22:LL_AHB1_GRP1_ReleaseReset	16	static
+../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_dma.c:155:10:LL_DMA_DeInit	24	static
+../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_dma.c:284:10:LL_DMA_Init	24	static
+../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_dma.c:384:6:LL_DMA_StructInit	16	static
