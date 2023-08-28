@@ -674,7 +674,7 @@ USBD_StatusTypeDef USBD_LL_SetTestMode(USBD_HandleTypeDef *pdev, uint8_t testmod
   */
 void *USBD_static_malloc(uint32_t size)
 {
-  static uint32_t mem[(sizeof(USBD_AUDIO_HandleTypeDef)/4)+1];/* On 32-bit boundary */
+  __ALIGN_BEGIN static uint8_t __ALIGN_END mem[sizeof(USBD_AUDIO_HandleTypeDef)];/* On 32-bit boundary */
   return mem;
 }
 

@@ -131,6 +131,7 @@ static uint8_t USBD_AUDIO_IsoINIncomplete(USBD_HandleTypeDef *pdev, uint8_t epnu
 static uint8_t USBD_AUDIO_IsoOutIncomplete(USBD_HandleTypeDef *pdev, uint8_t epnum);
 static void AUDIO_REQ_GetCurrent(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 static void AUDIO_REQ_SetCurrent(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
+static void AUDIO_REQ_GetRange(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 static void *USBD_AUDIO_GetAudioHeaderDesc(uint8_t *pConfDesc);
 
 /**
@@ -214,7 +215,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
 	0x00,													// bcdADC
 	0x02,
 	FUNCTION_SUBCLASS_UNDEFINED,	// bCategory
-	LOBYTE(AUDIO_WTOTALLENGTH),													// wTotalLength
+	LOBYTE(AUDIO_WTOTALLENGTH),		// wTotalLength
 	HIBYTE(AUDIO_WTOTALLENGTH),
 	0x00,													// bmControls
 
@@ -223,9 +224,9 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
 	CS_INTERFACE,									// bDescriptorType
 	CLOCK_SOURCE,									// bDescriptorSubtype
 	CLOCK_SOURCE_ID,							// bClockID
-	0x00,													// bmAttributes
-	0x00,													// bmControls
-	INPUT_TERMINAL_ID,						// bAssocTerminal
+	0x03,													// bmAttributes
+	0x03,													// bmControls: see Audio20 4.7.2.1
+	0x00,													// bAssocTerminal
 	0x00,													// iClockSource
 
 	// Input terminal
@@ -235,7 +236,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
 	INPUT_TERMINAL_ID,													// bTerminalID
 	LOBYTE(INPUT_TERMINAL_TYPE),	// wTerminalType
 	HIBYTE(INPUT_TERMINAL_TYPE),
-	OUTPUT_TERMINAL_ID,						// bAssocTerminal
+	0x00,													// bAssocTerminal
 	CLOCK_SOURCE_ID,							// bCSourceID
 	0x02,													// bNrChannels
 	0x03,													// bmChannelConfig
@@ -247,17 +248,31 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
 	0x00,
 	0x00,													// iTerminal
 
-	// TODO: Feature unit for mute control
+	// Feature unit
+	14U,													// bLength
+	CS_INTERFACE,									// bDescriptorType
+	FEATURE_UNIT,									// bDescriptorSubtype
+	FEATURE_UNIT_ID,							// bUnitID
+	INPUT_TERMINAL_ID,						// bSourceID
+	0x03,													// bmaControls(0)
+	0x00,
+	0x00,
+	0x00,
+	0x03,													// bmaControls(1)
+	0x00,
+	0x00,
+	0x00,
+	0x00,													// iFeature
 
 	// Output terminal
 	12U,													// bLength
 	CS_INTERFACE,									// bDescriptorType
 	OUTPUT_TERMINAL,							// bDescriptorSubtype
 	OUTPUT_TERMINAL_ID,						// bTerminalID
-	LOBYTE(OUTPUT_TERMINAL_TYPE),					// wTerminalType
+	LOBYTE(OUTPUT_TERMINAL_TYPE),	// wTerminalType
 	HIBYTE(OUTPUT_TERMINAL_TYPE),
-	INPUT_TERMINAL_ID,						// bAssocTerminal
-	INPUT_TERMINAL_ID,						// bSourceID
+	0x00,													// bAssocTerminal
+	FEATURE_UNIT_ID,							// bSourceID
 	CLOCK_SOURCE_ID,							// bCSourceID
 	0x00,													// bmControls
 	0x00,
@@ -265,7 +280,8 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
 
 	// AS interface descriptor: see Audio20 section 4.9
 	// Standard
-	// Alternate setting 0: see https://learn.microsoft.com/en-us/windows-hardware/drivers/audio/usb-2-0-audio-drivers
+	// Alternate settings: see https://learn.microsoft.com/en-us/windows-hardware/drivers/audio/usb-2-0-audio-drivers
+	// Alternate setting 0
 	0x09,													// bLength
 	USB_DESC_TYPE_INTERFACE,			// bDescriptorType
 	AS_INTERFACE_NUM,													// bInterfaceNumber
@@ -474,7 +490,7 @@ __ALIGN_BEGIN static uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALI
 //  0x00,                                 /* bLockDelayUnits */
 //  0x00,                                 /* wLockDelay */
 //  0x00,
-//  /* 07 byte*/
+  /* 07 byte*/
 };
 
 /* USB Standard Device Descriptor */
@@ -622,27 +638,28 @@ static uint8_t USBD_AUDIO_Setup(USBD_HandleTypeDef *pdev,
 
   if (haudio == NULL)
   {
-    return (uint8_t)USBD_FAIL;
+  	ret = USBD_FAIL;
+  	goto Exit;
   }
 
   switch (req->bmRequest & USB_REQ_TYPE_MASK)
   {
     case USB_REQ_TYPE_CLASS:
-      switch (req->bRequest)
-      {
-        case AUDIO_REQ_GET_CUR:
-          AUDIO_REQ_GetCurrent(pdev, req);
-          break;
-
-        case AUDIO_REQ_SET_CUR:
-          AUDIO_REQ_SetCurrent(pdev, req);
-          break;
-
-        default:
-          USBD_CtlError(pdev, req);
-          ret = USBD_FAIL;
-          break;
-      }
+    	switch (req->bRequest)
+    	{
+				case AUDIO_REQ_CUR:
+					if (req->bmRequest & 0x80)
+						AUDIO_REQ_GetCurrent(pdev, req);
+					else
+						AUDIO_REQ_SetCurrent(pdev, req);
+					break;
+				case AUDIO_REQ_RANGE:
+					AUDIO_REQ_GetRange(pdev, req);
+					break;
+				default:
+					USBD_CtlError(pdev, req);
+					ret = USBD_FAIL;
+    	}
       break;
 
     case USB_REQ_TYPE_STANDARD:
@@ -725,6 +742,8 @@ static uint8_t USBD_AUDIO_Setup(USBD_HandleTypeDef *pdev,
       break;
   }
 
+Exit:
+  USBD_DbgLog("%s: %u", __FUNCTION__, ret);
   return (uint8_t)ret;
 }
 
@@ -1028,6 +1047,46 @@ static void AUDIO_REQ_SetCurrent(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef 
     /* Prepare the reception of the buffer over EP0 */
     (void)USBD_CtlPrepareRx(pdev, haudio->control.data, haudio->control.len);
   }
+}
+
+static void AUDIO_REQ_GetRange(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
+{
+	USBD_AUDIO_HandleTypeDef *haudio;
+	haudio = (USBD_AUDIO_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId];
+
+	if (haudio == NULL)
+	{
+		return;
+	}
+
+	USBD_memset(haudio->control.data, 0, USB_MAX_EP0_SIZE);
+
+	USBD_DbgLog("%s: id=%u, CS=%u", __FUNCTION__, HIBYTE(req->wIndex), HIBYTE(req->wValue));
+
+	switch (HIBYTE(req->wIndex))
+	{
+	case CLOCK_SOURCE_ID:
+		if (HIBYTE(req->wValue) == CS_SAM_FREQ_CONTROL)
+		{
+			uint8_t* pData = haudio->control.data;
+
+			// See Audio20 5.2.3.3
+			SET_DATA(pData, uint16_t, 1U);				// wNumSubRanges
+			SET_DATA(pData, uint32_t, 48000U);		// wMIN(1)
+			SET_DATA(pData, uint32_t, 384000U);		// wMAX(1)
+			SET_DATA(pData, uint32_t, 1U);				// wRES(1)
+
+			USBD_CtlSendData(pdev, haudio->control.data, MIN(req->wLength, USB_MAX_EP0_SIZE));
+		}
+		else
+		{
+			USBD_CtlError(pdev, req);
+		}
+		break;
+	default:
+		USBD_CtlError(pdev, req);
+		break;
+	}
 }
 
 #ifndef USE_USBD_COMPOSITE

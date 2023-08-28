@@ -57,13 +57,14 @@ extern "C" {
 #define AUDIO_FS_BINTERVAL                            0x01U
 #endif /* AUDIO_FS_BINTERVAL */
 
-#define AUDIO_WTOTALLENGTH														46U
+#define AUDIO_WTOTALLENGTH														60U
 
 #ifndef AUDIO_OUT_EP
 #define AUDIO_OUT_EP                                  0x01U
 #endif /* AUDIO_OUT_EP */
 
-#define USB_AUDIO_CONFIG_DESC_SIZ                     134U
+#define USB_AUDIO_CONFIG_DESC_SIZ                     148U
+//#define USB_AUDIO_CONFIG_DESC_SIZ                     112U
 #define AUDIO_INTERFACE_DESC_SIZE                     0x09U
 #define USB_AUDIO_DESC_SIZ                            0x09U
 #define AUDIO_STANDARD_ENDPOINT_DESC_SIZE             0x09U
@@ -98,8 +99,11 @@ extern "C" {
 
 #define AUDIO_ENDPOINT_GENERAL                        0x01U
 
+#define AUDIO_REQ_CUR																	0x01U
+#define AUDIO_REQ_RANGE																0x02U
 #define AUDIO_REQ_GET_CUR                             0x81U
 #define AUDIO_REQ_SET_CUR                             0x01U
+#define AUDIO_REQ_GET_RANGE														0x82U
 
 #define AUDIO_OUT_STREAMING_CTRL                      0x02U
 
@@ -136,29 +140,33 @@ extern "C" {
 #define CS_INTERFACE																	0x24
 #define CS_ENDPOINT																		0x25
 
+#define CS_SAM_FREQ_CONTROL														0x01
+#define FU_MUTE_CONTROL																0x01
+
 #define AC_DESCRIPTOR_UNDEFINED												0x00
 #define HEADER																				0x01
 #define INPUT_TERMINAL																0x02
 #define OUTPUT_TERMINAL																0x03
 #define CLOCK_SOURCE																	0x0A
-#define CLOCK_SELECTOR																0x0B
+#define FEATURE_UNIT																	0x06
 
 #define AS_DESCRIPTOR_UNDEFINED												0x00
 #define AS_GENERAL																		0x01
 #define FORMAT_TYPE																		0x02
 
 // Interface definitions
-#define AC_INTERFACE_NUM															0x01
-#define AS_INTERFACE_NUM															0x02
+#define AC_INTERFACE_NUM															0x00
+#define AS_INTERFACE_NUM															0x01
 
 // Clock source definitions
-#define CLOCK_SOURCE_ID																0x01
+#define CLOCK_SOURCE_ID																0x04
 
 // Terminal definitions
 #define INPUT_TERMINAL_ID															0x01
 #define INPUT_TERMINAL_TYPE														0x0101	// USB Streaming; See Termt20 section 2.1
-#define OUTPUT_TERMINAL_ID														0x02
+#define OUTPUT_TERMINAL_ID														0x03
 #define OUTPUT_TERMINAL_TYPE													0x0301	// Speaker; See Termt20 section 2.3
+#define FEATURE_UNIT_ID																0x02
 
 // Endpoint definitions
 #define CONTROL_EP_ADDR
@@ -169,6 +177,10 @@ extern "C" {
 #define FEEDBACK_EP_ATTRIB														0x11
 
 #define EP_GENERAL																		0x01
+
+#define SET_DATA(_ptr, _type, _value) \
+	*(_type*)_ptr = _value; \
+	_ptr += sizeof(_type)
 
 /* Audio Commands enumeration */
 typedef enum

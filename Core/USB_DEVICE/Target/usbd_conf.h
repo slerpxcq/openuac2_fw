@@ -75,7 +75,7 @@
 /*---------- -----------*/
 #define USBD_SELF_POWERED     0U
 /*---------- -----------*/
-#define USBD_AUDIO_FREQ     22100U
+#define USBD_AUDIO_FREQ     48000U
 
 /****************************************/
 /* #define for FS and HS identification */
