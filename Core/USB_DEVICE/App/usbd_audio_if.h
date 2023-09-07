@@ -115,6 +115,11 @@ void TransferComplete_CallBack_HS(void);
 void HalfTransfer_CallBack_HS(void);
 
 /* USER CODE BEGIN EXPORTED_FUNCTIONS */
+typedef enum _AudioItfState
+{
+	ITF_PLAYING,
+	ITF_STOPPED
+} AudioItfState;
 
 /* USER CODE END EXPORTED_FUNCTIONS */
 

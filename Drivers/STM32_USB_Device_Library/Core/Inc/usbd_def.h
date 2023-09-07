@@ -79,7 +79,7 @@ extern "C" {
 #endif /*USBD_SELF_POWERED */
 
 #ifndef USBD_MAX_POWER
-#define USBD_MAX_POWER                                  250U /* 100 mA */
+#define USBD_MAX_POWER                                  0x32U /* 100 mA */
 #endif /* USBD_MAX_POWER */
 
 #ifndef USBD_SUPPORT_USER_STRING_DESC

@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_audio_if.h"
+#include "main.h"
 
 /* USER CODE BEGIN INCLUDE */
 
@@ -101,6 +102,9 @@
   */
 
 extern USBD_HandleTypeDef hUsbDeviceHS;
+static AudioItfState s_ItfState = ITF_STOPPED;
+
+uint32_t g_TxSampleCnt;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
 
@@ -153,9 +157,9 @@ USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops_HS =
 static int8_t AUDIO_Init_HS(uint32_t AudioFreq, uint32_t Volume, uint32_t options)
 {
   /* USER CODE BEGIN 9 */
-  UNUSED(AudioFreq);
-  UNUSED(Volume);
-  UNUSED(options);
+	USBD_DbgLog("%s: ", __FUNCTION__);
+	s_ItfState = ITF_STOPPED;
+	LL_TIM_EnableCounter(TIM3);
   return (USBD_OK);
   /* USER CODE END 9 */
 }
@@ -168,6 +172,7 @@ static int8_t AUDIO_Init_HS(uint32_t AudioFreq, uint32_t Volume, uint32_t option
 static int8_t AUDIO_DeInit_HS(uint32_t options)
 {
   /* USER CODE BEGIN 10 */
+	USBD_DbgLog("%s: To be implemented", __FUNCTION__);
   UNUSED(options);
   return (USBD_OK);
   /* USER CODE END 10 */
@@ -183,17 +188,24 @@ static int8_t AUDIO_DeInit_HS(uint32_t options)
 static int8_t AUDIO_AudioCmd_HS(uint8_t* pbuf, uint32_t size, uint8_t cmd)
 {
   /* USER CODE BEGIN 11 */
+	UNUSED(pbuf);
+	UNUSED(size);
+
   switch(cmd)
   {
-    case AUDIO_CMD_START:
-    break;
-
-    case AUDIO_CMD_PLAY:
-    break;
+	case AUDIO_CMD_PLAY:
+		s_ItfState = ITF_PLAYING;
+//		LL_GPIO_SetOutputPin(LED2_GPIO_Port, LED2_Pin);
+		break;
+	case AUDIO_CMD_STOP:
+		s_ItfState = ITF_STOPPED;
+//		LL_GPIO_ResetOutputPin(LED2_GPIO_Port, LED2_Pin);
+		break;
+	default:
+//		USBD_DbgLog("%s: Unsupported command", __FUNCTION__);
+		return USBD_FAIL;
   }
-  UNUSED(pbuf);
-  UNUSED(size);
-  UNUSED(cmd);
+
   return (USBD_OK);
   /* USER CODE END 11 */
 }
@@ -206,6 +218,7 @@ static int8_t AUDIO_AudioCmd_HS(uint8_t* pbuf, uint32_t size, uint8_t cmd)
 static int8_t AUDIO_VolumeCtl_HS(uint8_t vol)
 {
   /* USER CODE BEGIN 12 */
+	USBD_DbgLog("%s: To be implemented", __FUNCTION__);
   UNUSED(vol);
   return (USBD_OK);
   /* USER CODE END 12 */
@@ -219,6 +232,7 @@ static int8_t AUDIO_VolumeCtl_HS(uint8_t vol)
 static int8_t AUDIO_MuteCtl_HS(uint8_t cmd)
 {
   /* USER CODE BEGIN 13 */
+	USBD_DbgLog("%s: To be implemented", __FUNCTION__);
   UNUSED(cmd);
   return (USBD_OK);
   /* USER CODE END 13 */
@@ -246,7 +260,7 @@ static int8_t AUDIO_PeriodicTC_HS(uint8_t *pbuf, uint32_t size, uint8_t cmd)
 static int8_t AUDIO_GetState_HS(void)
 {
   /* USER CODE BEGIN 15 */
-  return (USBD_OK);
+  return s_ItfState;
   /* USER CODE END 15 */
 }
 
@@ -256,9 +270,11 @@ static int8_t AUDIO_GetState_HS(void)
   */
 void TransferComplete_CallBack_HS(void)
 {
-  /* USER CODE BEGIN 16 */
-  USBD_AUDIO_Sync(&hUsbDeviceHS, AUDIO_OFFSET_FULL);
-  /* USER CODE END 16 */
+	if (s_ItfState == ITF_PLAYING)
+	{
+		USBD_AUDIO_Sync(&hUsbDeviceHS, 0);
+	}
+	g_TxSampleCnt += 1;
 }
 
 /**
@@ -268,7 +284,8 @@ void TransferComplete_CallBack_HS(void)
 void HalfTransfer_CallBack_HS(void)
 {
   /* USER CODE BEGIN 17 */
-  USBD_AUDIO_Sync(&hUsbDeviceHS, AUDIO_OFFSET_HALF);
+//	USBD_DbgLog("%s: To be implemented", __FUNCTION__);
+//  USBD_AUDIO_Sync(&hUsbDeviceHS, AUDIO_OFFSET_HALF);
   /* USER CODE END 17 */
 }
 

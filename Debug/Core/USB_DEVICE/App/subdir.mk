@@ -5,18 +5,24 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../Core/USB_DEVICE/App/audio_buffer.c \
+../Core/USB_DEVICE/App/audio_desc.c \
 ../Core/USB_DEVICE/App/usb_device.c \
 ../Core/USB_DEVICE/App/usbd_audio.c \
 ../Core/USB_DEVICE/App/usbd_audio_if.c \
 ../Core/USB_DEVICE/App/usbd_desc.c 
 
 OBJS += \
+./Core/USB_DEVICE/App/audio_buffer.o \
+./Core/USB_DEVICE/App/audio_desc.o \
 ./Core/USB_DEVICE/App/usb_device.o \
 ./Core/USB_DEVICE/App/usbd_audio.o \
 ./Core/USB_DEVICE/App/usbd_audio_if.o \
 ./Core/USB_DEVICE/App/usbd_desc.o 
 
 C_DEPS += \
+./Core/USB_DEVICE/App/audio_buffer.d \
+./Core/USB_DEVICE/App/audio_desc.d \
 ./Core/USB_DEVICE/App/usb_device.d \
 ./Core/USB_DEVICE/App/usbd_audio.d \
 ./Core/USB_DEVICE/App/usbd_audio_if.d \
@@ -30,7 +36,7 @@ Core/USB_DEVICE/App/%.o Core/USB_DEVICE/App/%.su: ../Core/USB_DEVICE/App/%.c Cor
 clean: clean-Core-2f-USB_DEVICE-2f-App
 
 clean-Core-2f-USB_DEVICE-2f-App:
-	-$(RM) ./Core/USB_DEVICE/App/usb_device.d ./Core/USB_DEVICE/App/usb_device.o ./Core/USB_DEVICE/App/usb_device.su ./Core/USB_DEVICE/App/usbd_audio.d ./Core/USB_DEVICE/App/usbd_audio.o ./Core/USB_DEVICE/App/usbd_audio.su ./Core/USB_DEVICE/App/usbd_audio_if.d ./Core/USB_DEVICE/App/usbd_audio_if.o ./Core/USB_DEVICE/App/usbd_audio_if.su ./Core/USB_DEVICE/App/usbd_desc.d ./Core/USB_DEVICE/App/usbd_desc.o ./Core/USB_DEVICE/App/usbd_desc.su
+	-$(RM) ./Core/USB_DEVICE/App/audio_buffer.d ./Core/USB_DEVICE/App/audio_buffer.o ./Core/USB_DEVICE/App/audio_buffer.su ./Core/USB_DEVICE/App/audio_desc.d ./Core/USB_DEVICE/App/audio_desc.o ./Core/USB_DEVICE/App/audio_desc.su ./Core/USB_DEVICE/App/usb_device.d ./Core/USB_DEVICE/App/usb_device.o ./Core/USB_DEVICE/App/usb_device.su ./Core/USB_DEVICE/App/usbd_audio.d ./Core/USB_DEVICE/App/usbd_audio.o ./Core/USB_DEVICE/App/usbd_audio.su ./Core/USB_DEVICE/App/usbd_audio_if.d ./Core/USB_DEVICE/App/usbd_audio_if.o ./Core/USB_DEVICE/App/usbd_audio_if.su ./Core/USB_DEVICE/App/usbd_desc.d ./Core/USB_DEVICE/App/usbd_desc.o ./Core/USB_DEVICE/App/usbd_desc.su
 
 .PHONY: clean-Core-2f-USB_DEVICE-2f-App
 

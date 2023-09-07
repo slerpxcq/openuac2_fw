@@ -915,11 +915,11 @@ USBD_StatusTypeDef USBD_LL_SOF(USBD_HandleTypeDef *pdev)
       }
     }
 #else
-    if (pdev->pClass[0] != NULL)
+    if (pdev->pClass[pdev->classId] != NULL)
     {
-      if (pdev->pClass[0]->SOF != NULL)
+      if (pdev->pClass[pdev->classId]->SOF != NULL)
       {
-        (void)pdev->pClass[0]->SOF(pdev);
+        pdev->pClass[pdev->classId]->SOF(pdev);
       }
     }
 #endif /* USE_USBD_COMPOSITE */

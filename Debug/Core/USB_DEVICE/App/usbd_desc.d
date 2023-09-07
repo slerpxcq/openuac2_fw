@@ -37,6 +37,7 @@ Core/USB_DEVICE/App/usbd_desc.o: ../Core/USB_DEVICE/App/usbd_desc.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_utils.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_pwr.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usart.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_gpio.h \
  D:/Documents/ST/STM32CubeIDE/workspace/f446_usb_audio/Drivers/STM32_USB_Device_Library/Core/Inc/usbd_def.h \
@@ -84,6 +85,7 @@ D:/Documents/ST/STM32CubeIDE/workspace/f446_usb_audio/Core/USB_DEVICE/Target/usb
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_utils.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_pwr.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_tim.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usart.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_gpio.h:
 D:/Documents/ST/STM32CubeIDE/workspace/f446_usb_audio/Drivers/STM32_USB_Device_Library/Core/Inc/usbd_def.h:

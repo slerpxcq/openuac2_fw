@@ -26,6 +26,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include  "usbd_ioreq.h"
+#include "audio_buffer.h"
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
@@ -40,28 +41,10 @@ extern "C" {
 /** @defgroup USBD_AUDIO_Exported_Defines
   * @{
   */
-#ifndef USBD_AUDIO_FREQ
-/* AUDIO Class Config */
-#define USBD_AUDIO_FREQ                               48000U
-#endif /* USBD_AUDIO_FREQ */
-
-#ifndef USBD_MAX_NUM_INTERFACES
-#define USBD_MAX_NUM_INTERFACES                       1U
-#endif /* USBD_AUDIO_FREQ */
-
-#ifndef AUDIO_HS_BINTERVAL
-#define AUDIO_HS_BINTERVAL                            0x01U
-#endif /* AUDIO_HS_BINTERVAL */
-
-#ifndef AUDIO_FS_BINTERVAL
-#define AUDIO_FS_BINTERVAL                            0x01U
-#endif /* AUDIO_FS_BINTERVAL */
+#define FEEDBACK_HS_BINTERVAL													4U
+#define STREAMING_HS_BINTERVAL                        1U
 
 #define AUDIO_WTOTALLENGTH														60U
-
-#ifndef AUDIO_OUT_EP
-#define AUDIO_OUT_EP                                  0x01U
-#endif /* AUDIO_OUT_EP */
 
 #define USB_AUDIO_CONFIG_DESC_SIZ                     148U
 //#define USB_AUDIO_CONFIG_DESC_SIZ                     112U
@@ -111,12 +94,14 @@ extern "C" {
 #define AUDIO_IN_TC                                   0x02U
 
 
-#define AUDIO_OUT_PACKET                              (uint16_t)(((USBD_AUDIO_FREQ * 2U * 2U) / 1000U))
+#define AUDIO_OUT_PACKET                              (uint16_t)(((USBD_AUDIO_FREQ * 2U * 4U) / 1000U))
 #define AUDIO_DEFAULT_VOLUME                          70U
+
+#define FEEDBACK_PACKET_SIZE													4U
 
 /* Number of sub-packets in the audio transfer buffer. You can modify this value but always make sure
   that it is an even number and higher than 3 */
-#define AUDIO_OUT_PACKET_NUM                          80U
+#define AUDIO_OUT_PACKET_NUM                          800U
 /* Total size of the audio transfer buffer */
 #define AUDIO_TOTAL_BUF_SIZE                          ((uint16_t)(AUDIO_OUT_PACKET * AUDIO_OUT_PACKET_NUM))
 
@@ -169,17 +154,17 @@ extern "C" {
 #define FEATURE_UNIT_ID																0x02
 
 // Endpoint definitions
-#define CONTROL_EP_ADDR
-#define CONTROL_EP_ATTRIB
 #define STREAMING_EP_ADDR															0x01
 #define STREAMING_EP_ATTRIB														0x05
-#define FEEDBACK_EP_ADDR															0x82
+#define FEEDBACK_EP_ADDR															(STREAMING_EP_ADDR | 0x80)
 #define FEEDBACK_EP_ATTRIB														0x11
+#define STREAMING_EP_NUM 															(STREAMING_EP_ADDR & 0xF)
+#define FEEDBACK_EP_NUM 															(FEEDBACK_EP_ADDR & 0xF)
 
 #define EP_GENERAL																		0x01
 
 #define SET_DATA(_ptr, _type, _value) \
-	*(_type*)_ptr = _value; \
+	*(_type*)_ptr = (_value); \
 	_ptr += sizeof(_type)
 
 /* Audio Commands enumeration */
@@ -218,14 +203,9 @@ typedef struct
 typedef struct
 {
   uint32_t alt_setting;
-  uint8_t buffer[AUDIO_TOTAL_BUF_SIZE];
-  AUDIO_OffsetTypeDef offset;
-  uint8_t rd_enable;
-  uint16_t rd_ptr;
-  uint16_t wr_ptr;
+  AudioBuffer* aud_buf;
   USBD_AUDIO_ControlTypeDef control;
 } USBD_AUDIO_HandleTypeDef;
-
 
 typedef struct
 {
@@ -238,113 +218,6 @@ typedef struct
   int8_t (*GetState)(void);
 } USBD_AUDIO_ItfTypeDef;
 
-/*
- * Audio Class specification release 1.0
- */
-
-/* Table 4-2: Class-Specific AC Interface Header Descriptor */
-typedef struct
-{
-  uint8_t           bLength;
-  uint8_t           bDescriptorType;
-  uint8_t           bDescriptorSubtype;
-  uint16_t          bcdADC;
-  uint16_t          wTotalLength;
-  uint8_t           bInCollection;
-  uint8_t           baInterfaceNr;
-} __PACKED USBD_SpeakerIfDescTypeDef;
-
-/* Table 4-3: Input Terminal Descriptor */
-typedef struct
-{
-  uint8_t           bLength;
-  uint8_t           bDescriptorType;
-  uint8_t           bDescriptorSubtype;
-  uint8_t           bTerminalID;
-  uint16_t          wTerminalType;
-  uint8_t           bAssocTerminal;
-  uint8_t           bNrChannels;
-  uint16_t          wChannelConfig;
-  uint8_t           iChannelNames;
-  uint8_t           iTerminal;
-} __PACKED USBD_SpeakerInDescTypeDef;
-
-/* USB Speaker Audio Feature Unit Descriptor */
-typedef struct
-{
-  uint8_t           bLength;
-  uint8_t           bDescriptorType;
-  uint8_t           bDescriptorSubtype;
-  uint8_t           bUnitID;
-  uint8_t           bSourceID;
-  uint8_t           bControlSize;
-  uint16_t          bmaControls;
-  uint8_t           iTerminal;
-} __PACKED USBD_SpeakerFeatureDescTypeDef;
-
-/* Table 4-4: Output Terminal Descriptor */
-typedef struct
-{
-  uint8_t           bLength;
-  uint8_t           bDescriptorType;
-  uint8_t           bDescriptorSubtype;
-  uint8_t           bTerminalID;
-  uint16_t          wTerminalType;
-  uint8_t           bAssocTerminal;
-  uint8_t           bSourceID;
-  uint8_t           iTerminal;
-} __PACKED USBD_SpeakerOutDescTypeDef;
-
-/* Table 4-19: Class-Specific AS Interface Descriptor */
-typedef struct
-{
-  uint8_t           bLength;
-  uint8_t           bDescriptorType;
-  uint8_t           bDescriptorSubtype;
-  uint8_t           bTerminalLink;
-  uint8_t           bDelay;
-  uint16_t          wFormatTag;
-} __PACKED USBD_SpeakerStreamIfDescTypeDef;
-
-/* USB Speaker Audio Type III Format Interface Descriptor */
-typedef struct
-{
-  uint8_t           bLength;
-  uint8_t           bDescriptorType;
-  uint8_t           bDescriptorSubtype;
-  uint8_t           bFormatType;
-  uint8_t           bNrChannels;
-  uint8_t           bSubFrameSize;
-  uint8_t           bBitResolution;
-  uint8_t           bSamFreqType;
-  uint8_t           tSamFreq2;
-  uint8_t           tSamFreq1;
-  uint8_t           tSamFreq0;
-} USBD_SpeakerIIIFormatIfDescTypeDef;
-
-/* Table 4-17: Standard AC Interrupt Endpoint Descriptor */
-typedef struct
-{
-  uint8_t           bLength;
-  uint8_t           bDescriptorType;
-  uint8_t           bEndpointAddress;
-  uint8_t           bmAttributes;
-  uint16_t          wMaxPacketSize;
-  uint8_t           bInterval;
-  uint8_t           bRefresh;
-  uint8_t           bSynchAddress;
-} __PACKED USBD_SpeakerEndDescTypeDef;
-
-/* Table 4-21: Class-Specific AS Isochronous Audio Data Endpoint Descriptor        */
-typedef struct
-{
-  uint8_t           bLength;
-  uint8_t           bDescriptorType;
-  uint8_t           bDescriptor;
-  uint8_t           bmAttributes;
-  uint8_t           bLockDelayUnits;
-  uint16_t          wLockDelay;
-} __PACKED USBD_SpeakerEndStDescTypeDef;
 
 /**
   * @}
