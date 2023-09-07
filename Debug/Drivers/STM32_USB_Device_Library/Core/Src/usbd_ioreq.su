@@ -1,7 +1,0 @@
-../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c:86:20:USBD_CtlSendData	24	static
-../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c:113:20:USBD_CtlContinueSendData	24	static
-../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c:130:20:USBD_CtlPrepareRx	24	static
-../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c:157:20:USBD_CtlContinueRx	24	static
-../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c:171:20:USBD_CtlSendStatus	16	static
-../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c:188:20:USBD_CtlReceiveStatus	16	static
-../Drivers/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c:206:10:USBD_GetRxCount	16	static
