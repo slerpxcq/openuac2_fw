@@ -21,8 +21,8 @@ typedef struct
 	AudioBufferState state;
 } AudioBuffer;
 
-void AB_Init(AudioBuffer* ab, void* mem, int32_t capacity);
-AudioBufferState AB_PreRx(AudioBuffer* ab, int32_t rxSize);
-AudioBufferState AB_PostTx(AudioBuffer* ab, int32_t txSize);
+void AudioBuffer_Init(AudioBuffer* ab, void* mem, int32_t capacity);
+AudioBufferState AudioBuffer_PostRecieve(AudioBuffer* ab, int32_t rxSize);
+AudioBufferState AudioBuffer_PostTransmit(AudioBuffer* ab, int32_t txSize);
 
 #endif // _AUDIO_BUFFER_H_

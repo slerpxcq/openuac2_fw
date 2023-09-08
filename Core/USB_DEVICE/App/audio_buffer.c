@@ -1,7 +1,7 @@
 #include "audio_buffer.h"
 #include <string.h>
 
-void AB_Init(AudioBuffer* ab, void* mem, int32_t capacity)
+void AudioBuffer_Init(AudioBuffer* ab, void* mem, int32_t capacity)
 {
 	ab->state = AB_OK;
 	ab->mem = mem;
@@ -12,7 +12,7 @@ void AB_Init(AudioBuffer* ab, void* mem, int32_t capacity)
 	ab->rd_ptr = 0;
 }
 
-AudioBufferState AB_PreRx(AudioBuffer* ab, int32_t rxSize)
+AudioBufferState AudioBuffer_PostRecieve(AudioBuffer* ab, int32_t rxSize)
 {
 	while (ab->lock);
 	ab->lock = 1;
@@ -45,7 +45,7 @@ Exit:
 	return ab->state;
 }
 
-AudioBufferState AB_PostTx(AudioBuffer* ab, int32_t txSize)
+AudioBufferState AudioBuffer_PostTransmit(AudioBuffer* ab, int32_t txSize)
 {
 	while (ab->lock);
 	ab->lock = 1;

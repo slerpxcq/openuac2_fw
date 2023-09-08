@@ -232,7 +232,7 @@ static int8_t AUDIO_VolumeCtl_HS(uint8_t vol)
 static int8_t AUDIO_MuteCtl_HS(uint8_t cmd)
 {
   /* USER CODE BEGIN 13 */
-	USBD_DbgLog("%s: To be implemented", __FUNCTION__);
+	USBD_DbgLog("%s: %u", __FUNCTION__, cmd);
   UNUSED(cmd);
   return (USBD_OK);
   /* USER CODE END 13 */
@@ -272,7 +272,7 @@ void TransferComplete_CallBack_HS(void)
 {
 	if (s_ItfState == ITF_PLAYING)
 	{
-		USBD_AUDIO_Sync(&hUsbDeviceHS, 0);
+		USBD_AUDIO_Sync(&hUsbDeviceHS);
 	}
 	g_TxSampleCnt += 1;
 }

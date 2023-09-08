@@ -46,64 +46,26 @@ extern "C" {
 
 #define AUDIO_WTOTALLENGTH														60U
 
-#define USB_AUDIO_CONFIG_DESC_SIZ                     148U
-//#define USB_AUDIO_CONFIG_DESC_SIZ                     112U
-#define AUDIO_INTERFACE_DESC_SIZE                     0x09U
-#define USB_AUDIO_DESC_SIZ                            0x09U
-#define AUDIO_STANDARD_ENDPOINT_DESC_SIZE             0x09U
-#define AUDIO_STREAMING_ENDPOINT_DESC_SIZE            0x07U
+#define USB_AUDIO_CONFIG_DESC_SIZE                    148U
 
-#define AUDIO_DESCRIPTOR_TYPE                         0x21U
-#define USB_DEVICE_CLASS_AUDIO                        0x01U
-#define AUDIO_SUBCLASS_AUDIOCONTROL                   0x01U
-#define AUDIO_SUBCLASS_AUDIOSTREAMING                 0x02U
-#define AUDIO_PROTOCOL_UNDEFINED                      0x00U
-#define AUDIO_STREAMING_GENERAL                       0x01U
-#define AUDIO_STREAMING_FORMAT_TYPE                   0x02U
-
-/* Audio Descriptor Types */
-#define AUDIO_INTERFACE_DESCRIPTOR_TYPE               0x24U
-#define AUDIO_ENDPOINT_DESCRIPTOR_TYPE                0x25U
+#define USB_AUDIO_DESC_SIZE                           0x09U
 
 /* Audio Control Interface Descriptor Subtypes */
-#define AUDIO_CONTROL_HEADER                          0x01U
-#define AUDIO_CONTROL_INPUT_TERMINAL                  0x02U
-#define AUDIO_CONTROL_OUTPUT_TERMINAL                 0x03U
-#define AUDIO_CONTROL_FEATURE_UNIT                    0x06U
-
-#define AUDIO_INPUT_TERMINAL_DESC_SIZE                0x0CU
-#define AUDIO_OUTPUT_TERMINAL_DESC_SIZE               0x09U
-#define AUDIO_STREAMING_INTERFACE_DESC_SIZE           0x07U
-
-#define AUDIO_CONTROL_MUTE                            0x0001U
-
-#define AUDIO_FORMAT_TYPE_I                           0x01U
-#define AUDIO_FORMAT_TYPE_III                         0x03U
-
-#define AUDIO_ENDPOINT_GENERAL                        0x01U
+#define FORMAT_TYPE_I			                           0x01U
 
 #define AUDIO_REQ_CUR																	0x01U
 #define AUDIO_REQ_RANGE																0x02U
-#define AUDIO_REQ_GET_CUR                             0x81U
-#define AUDIO_REQ_SET_CUR                             0x01U
-#define AUDIO_REQ_GET_RANGE														0x82U
 
-#define AUDIO_OUT_STREAMING_CTRL                      0x02U
-
-#define AUDIO_OUT_TC                                  0x01U
-#define AUDIO_IN_TC                                   0x02U
-
-
-#define AUDIO_OUT_PACKET                              (uint16_t)(((USBD_AUDIO_FREQ * 2U * 4U) / 1000U))
-#define AUDIO_DEFAULT_VOLUME                          70U
-
+#define AUDIO_CHANNEL_NUM															2U
+#define AUDIO_BIT_RES																	32U
+#define AUDIO_OUT_PACKET_SIZE													(uint16_t)(((USBD_AUDIO_FREQ * AUDIO_CHANNEL_NUM * (AUDIO_BIT_RES / 8U)) / 1000U))
 #define FEEDBACK_PACKET_SIZE													4U
 
 /* Number of sub-packets in the audio transfer buffer. You can modify this value but always make sure
   that it is an even number and higher than 3 */
 #define AUDIO_OUT_PACKET_NUM                          800U
 /* Total size of the audio transfer buffer */
-#define AUDIO_TOTAL_BUF_SIZE                          ((uint16_t)(AUDIO_OUT_PACKET * AUDIO_OUT_PACKET_NUM))
+#define AUDIO_TOTAL_BUF_SIZE                          ((uint16_t)(AUDIO_OUT_PACKET_SIZE * AUDIO_OUT_PACKET_NUM))
 
 // Audio20 appendix definitions
 #define AUDIO_FUNCTION 																AUDIO
@@ -127,6 +89,7 @@ extern "C" {
 
 #define CS_SAM_FREQ_CONTROL														0x01
 #define FU_MUTE_CONTROL																0x01
+#define FU_VOLUME_CONTROL															0x02
 
 #define AC_DESCRIPTOR_UNDEFINED												0x00
 #define HEADER																				0x01
@@ -175,14 +138,6 @@ typedef enum
   AUDIO_CMD_STOP,
 } AUDIO_CMD_TypeDef;
 
-
-typedef enum
-{
-  AUDIO_OFFSET_NONE = 0,
-  AUDIO_OFFSET_HALF,
-  AUDIO_OFFSET_FULL,
-  AUDIO_OFFSET_UNKNOWN,
-} AUDIO_OffsetTypeDef;
 /**
   * @}
   */
@@ -249,7 +204,7 @@ extern USBD_ClassTypeDef USBD_AUDIO;
 uint8_t USBD_AUDIO_RegisterInterface(USBD_HandleTypeDef *pdev,
                                      USBD_AUDIO_ItfTypeDef *fops);
 
-void USBD_AUDIO_Sync(USBD_HandleTypeDef *pdev, AUDIO_OffsetTypeDef offset);
+void USBD_AUDIO_Sync(USBD_HandleTypeDef *pdev);
 
 #ifdef USE_USBD_COMPOSITE
 uint32_t USBD_AUDIO_GetEpPcktSze(USBD_HandleTypeDef *pdev, uint8_t If, uint8_t Ep);

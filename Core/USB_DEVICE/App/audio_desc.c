@@ -2,13 +2,13 @@
 
 #include "usbd_audio.h"
 
-__ALIGN_BEGIN uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALIGN_END =
+__ALIGN_BEGIN uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZE] __ALIGN_END =
 {
   /* Configuration 1 */
   0x09,                                 /* bLength */
   USB_DESC_TYPE_CONFIGURATION,          /* bDescriptorType */
-  LOBYTE(USB_AUDIO_CONFIG_DESC_SIZ),    /* wTotalLength */
-  HIBYTE(USB_AUDIO_CONFIG_DESC_SIZ),
+  LOBYTE(USB_AUDIO_CONFIG_DESC_SIZE),    /* wTotalLength */
+  HIBYTE(USB_AUDIO_CONFIG_DESC_SIZE),
   0x02,                                 /* bNumInterfaces */
   0x01,                                 /* bConfigurationValue */
   0x00,                                 /* iConfiguration */
@@ -87,11 +87,11 @@ __ALIGN_BEGIN uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALIGN_END 
 	FEATURE_UNIT,									// bDescriptorSubtype
 	FEATURE_UNIT_ID,							// bUnitID
 	INPUT_TERMINAL_ID,						// bSourceID
-	0x03,													// bmaControls(0)
+	0x0f,													// bmaControls(0)
 	0x00,
 	0x00,
 	0x00,
-	0x03,													// bmaControls(1)
+	0x0f,													// bmaControls(1)
 	0x00,
 	0x00,
 	0x00,
@@ -142,7 +142,7 @@ __ALIGN_BEGIN uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALIGN_END 
 	AS_GENERAL,										// bDescriptorSubtype
 	INPUT_TERMINAL_ID,						// bTerminalLink
 	0x00,													// bmControls
-	AUDIO_FORMAT_TYPE_I,					// bFormatType
+	FORMAT_TYPE_I,								// bFormatType
 	0x01,													// bmFormats: PCM; Check Frmts20 section A.2
 	0x00,
 	0x00,
@@ -158,7 +158,7 @@ __ALIGN_BEGIN uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZ] __ALIGN_END 
 	0x06,													// bLength
 	CS_INTERFACE,									// bDescriptorType
 	FORMAT_TYPE,									// bDescriptorSubtype
-	AUDIO_FORMAT_TYPE_I,					// bFormatType
+	FORMAT_TYPE_I,								// bFormatType
 	0x04,													// bSubslotSize
 	32U,													// bBitResolution
 
