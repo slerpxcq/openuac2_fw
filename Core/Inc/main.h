@@ -72,8 +72,6 @@ void Error_Handler(void);
 #define LED1_GPIO_Port GPIOC
 #define LED2_Pin LL_GPIO_PIN_14
 #define LED2_GPIO_Port GPIOC
-#define I2S_CLKSW_Pin LL_GPIO_PIN_9
-#define I2S_CLKSW_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

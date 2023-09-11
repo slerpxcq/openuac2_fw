@@ -41,6 +41,13 @@ extern "C" {
 /** @defgroup USBD_AUDIO_Exported_Defines
   * @{
   */
+#define AUDIO_MIN_FREQ																44100U
+#define AUDIO_MAX_FREQ																384000U
+#define	AUDIO_FREQ_RES																1U
+#define AUDIO_MIN_VOL																	0U
+#define AUDIO_MAX_VOL																	100U
+#define AUDIO_VOL_RES																	1U
+
 #define FEEDBACK_HS_BINTERVAL													4U
 #define STREAMING_HS_BINTERVAL                        1U
 
@@ -63,7 +70,7 @@ extern "C" {
 
 /* Number of sub-packets in the audio transfer buffer. You can modify this value but always make sure
   that it is an even number and higher than 3 */
-#define AUDIO_OUT_PACKET_NUM                          800U
+#define AUDIO_OUT_PACKET_NUM                          100U
 /* Total size of the audio transfer buffer */
 #define AUDIO_TOTAL_BUF_SIZE                          ((uint16_t)(AUDIO_OUT_PACKET_SIZE * AUDIO_OUT_PACKET_NUM))
 
@@ -136,6 +143,7 @@ typedef enum
   AUDIO_CMD_START = 1,
   AUDIO_CMD_PLAY,
   AUDIO_CMD_STOP,
+	AUDIO_CMD_UPDATE_FREQ,
 } AUDIO_CMD_TypeDef;
 
 /**

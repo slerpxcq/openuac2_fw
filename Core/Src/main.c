@@ -85,7 +85,6 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -99,8 +98,7 @@ int main(void)
 
   LL_TIM_EnableIT_UPDATE(TIM3);
 
-  // Select 49.152M clock
-  //LL_GPIO_SetOutputPin(I2S_CLKSW_GPIO_Port, I2S_CLKSW_Pin);
+//  printf("RCC->CFGR=%u\r\n", RCC->CFGR);
 
   /* USER CODE END 2 */
 
@@ -108,8 +106,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//  	LL_mDelay(500);
-//  	LL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
 
     /* USER CODE END WHILE */
 
@@ -124,12 +120,13 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-  LL_FLASH_SetLatency(LL_FLASH_LATENCY_5);
-  while(LL_FLASH_GetLatency()!= LL_FLASH_LATENCY_5)
+  LL_FLASH_SetLatency(LL_FLASH_LATENCY_3);
+  while(LL_FLASH_GetLatency()!= LL_FLASH_LATENCY_3)
   {
   }
-  LL_PWR_SetRegulVoltageScaling(LL_PWR_REGU_VOLTAGE_SCALE1);
-  LL_PWR_EnableOverDriveMode();
+  LL_PWR_SetRegulVoltageScaling(LL_PWR_REGU_VOLTAGE_SCALE3);
+  LL_PWR_DisableOverDriveMode();
+  LL_RCC_HSE_EnableBypass();
   LL_RCC_HSE_Enable();
 
    /* Wait till HSE is ready */
@@ -137,7 +134,8 @@ void SystemClock_Config(void)
   {
 
   }
-  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_12, 180, LL_RCC_PLLP_DIV_2);
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_16, 125, LL_RCC_PLLP_DIV_8);
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_16, 125, LL_RCC_PLLR_DIV_2);
   LL_RCC_PLL_Enable();
 
    /* Wait till PLL is ready */
@@ -148,21 +146,21 @@ void SystemClock_Config(void)
   LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
   LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_4);
   LL_RCC_SetAPB2Prescaler(LL_RCC_APB2_DIV_2);
-  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
+  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLLR);
 
    /* Wait till System clock is ready */
-  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL)
+  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLLR)
   {
 
   }
-  LL_SetSystemCoreClock(180000000);
+  LL_SetSystemCoreClock(96000000);
 
    /* Update the time base */
   if (HAL_InitTick (TICK_INT_PRIORITY) != HAL_OK)
   {
     Error_Handler();
   }
-  LL_RCC_ConfigMCO(LL_RCC_MCO1SOURCE_HSE, LL_RCC_MCO1_DIV_1);
+  LL_RCC_ConfigMCO(LL_RCC_MCO1SOURCE_PLLCLK, LL_RCC_MCO1_DIV_4);
   LL_RCC_SetTIMPrescaler(LL_RCC_TIM_PRESCALER_TWICE);
 }
 
@@ -311,9 +309,6 @@ static void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(GPIOC, LED1_Pin|LED2_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(I2S_CLKSW_GPIO_Port, I2S_CLKSW_Pin);
-
-  /**/
   LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_4);
 
   /**/
@@ -325,30 +320,13 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_9;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_5;
-  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_8;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   GPIO_InitStruct.Alternate = LL_GPIO_AF_0;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = I2S_CLKSW_Pin;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(I2S_CLKSW_GPIO_Port, &GPIO_InitStruct);
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_4;
@@ -378,6 +356,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
+  printf("System failed/r/n");
   LL_GPIO_SetOutputPin(LED1_GPIO_Port, LED1_Pin);
   while (1)
   {

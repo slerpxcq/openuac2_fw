@@ -397,27 +397,50 @@ static uint8_t USBD_AUDIO_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
   */
 static uint8_t USBD_AUDIO_EP0_RxReady(USBD_HandleTypeDef *pdev)
 {
-//  USBD_AUDIO_HandleTypeDef* haudio = pdev->pClassDataCmsit[pdev->classId];
-//
-//  if (haudio == NULL)
-//  {
-//    return (uint8_t)USBD_FAIL;
-//  }
+	USBD_AUDIO_HandleTypeDef* haudio = pdev->pClassDataCmsit[pdev->classId];
+	USBD_AUDIO_ItfTypeDef* aud_itf = pdev->pUserData[pdev->classId];
 
-//
-//  if (haudio->control.unit == FEATURE_UNIT_ID)
-//  {
-//    if (haudio->control.cmd == AUDIO_CUR)
-//    {
-//    	aud_itf->MuteCtl(haudio->control.data[0]);
-//    }
-//  }
-//
-//  haudio->control.cmd = 0U;
-//	haudio->control.len = 0U;
+	if (haudio == NULL)
+	{
+		return USBD_FAIL;
+	}
 
-	UNUSED(pdev);
-  return (uint8_t)USBD_OK;
+	switch (haudio->control.unit)
+	{
+	case CLOCK_SOURCE_ID:
+		if (haudio->control.cmd == CS_SAM_FREQ_CONTROL)
+		{
+			aud_itf->AudioCmd(haudio->control.data, haudio->control.len, AUDIO_CMD_UPDATE_FREQ);
+		}
+		else
+		{
+			return USBD_FAIL;
+		}
+		break;
+
+	case FEATURE_UNIT_ID:
+		switch (haudio->control.cmd)
+		{
+		case FU_MUTE_CONTROL:
+			aud_itf->MuteCtl(haudio->control.data[0]);
+			break;
+
+		case FU_VOLUME_CONTROL:
+			aud_itf->VolumeCtl(haudio->control.data[0]);
+			break;
+
+		default:
+			return USBD_FAIL;
+			break;
+		}
+		break;
+
+	default:
+		return USBD_FAIL;
+		break;
+	}
+
+  return USBD_OK;
 }
 /**
   * @brief  USBD_AUDIO_EP0_TxReady
@@ -428,7 +451,7 @@ static uint8_t USBD_AUDIO_EP0_RxReady(USBD_HandleTypeDef *pdev)
 static uint8_t USBD_AUDIO_EP0_TxReady(USBD_HandleTypeDef *pdev)
 {
 	UNUSED(pdev);
-  return (uint8_t)USBD_OK;
+  return USBD_OK;
 }
 /**
   * @brief  USBD_AUDIO_SOF
@@ -599,45 +622,20 @@ static void AUDIO_REQ_GetCurrent(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef 
 static void AUDIO_REQ_SetCurrent(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 {
   USBD_AUDIO_HandleTypeDef* haudio = pdev->pClassDataCmsit[pdev->classId];
-  USBD_AUDIO_ItfTypeDef* aud_itf = pdev->pUserData[pdev->classId];
 
   if (haudio == NULL)
   {
     return;
   }
 
-  switch (HIBYTE(req->wIndex))
+  if (req->wLength != 0U)
   {
-  case CLOCK_SOURCE_ID:
-  	USBD_DbgLog("%s: Change sampling frequency", __FUNCTION__);
-  	break;
+  	haudio->control.cmd = HIBYTE(req->wValue);
+  	haudio->control.len = (uint8_t)MIN(req->wLength, USB_MAX_EP0_SIZE);
+  	haudio->control.unit = HIBYTE(req->wIndex);
 
-  case FEATURE_UNIT_ID:
-  	switch (HIBYTE(req->wValue))
-  	{
-  	case FU_MUTE_CONTROL:
-  		aud_itf->MuteCtl(haudio->control.data[0]);
-  		break;
-
-  	case FU_VOLUME_CONTROL:
-  		if (*(uint16_t*)haudio->control.data == 0x8000)
-  		{
-  			aud_itf->MuteCtl(0);
-  		}
-  		else
-  		{
-  			aud_itf->VolumeCtl(0);
-  		}
-  		break;
-  	}
-  	break;
-
-  default:
-  	USBD_CtlError(pdev, req);
-  	break;
+  	USBD_CtlPrepareRx(pdev, haudio->control.data, haudio->control.len);
   }
-
-  USBD_CtlPrepareRx(pdev, haudio->control.data, haudio->control.len);
 }
 
 static void AUDIO_REQ_GetRange(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
@@ -650,6 +648,7 @@ static void AUDIO_REQ_GetRange(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
 	}
 
 	USBD_memset(haudio->control.data, 0, USB_MAX_EP0_SIZE);
+
 	uint8_t* pbuf = haudio->control.data;
 
 	switch (HIBYTE(req->wIndex))
@@ -657,13 +656,10 @@ static void AUDIO_REQ_GetRange(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
 	case CLOCK_SOURCE_ID:
 		if (HIBYTE(req->wValue) == CS_SAM_FREQ_CONTROL)
 		{
-			// See Audio20 5.2.3.3
-			SET_DATA(pbuf, uint16_t, 1U);				// wNumSubRanges
-			SET_DATA(pbuf, uint32_t, 44100U);
-			SET_DATA(pbuf, uint32_t, 384000U);
-			SET_DATA(pbuf, uint32_t, 1U);
-
-			USBD_CtlSendData(pdev, haudio->control.data, MIN(req->wLength, USB_MAX_EP0_SIZE));
+			SET_DATA(pbuf, uint16_t, 1U);
+			SET_DATA(pbuf, uint32_t, AUDIO_MIN_FREQ);
+			SET_DATA(pbuf, uint32_t, AUDIO_MAX_FREQ);
+			SET_DATA(pbuf, uint32_t, AUDIO_FREQ_RES);
 		}
 		else
 		{
@@ -676,11 +672,9 @@ static void AUDIO_REQ_GetRange(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
 		if (HIBYTE(req->wValue) == FU_VOLUME_CONTROL)
 		{
 			SET_DATA(pbuf, uint16_t, 1U);
-			SET_DATA(pbuf, uint16_t, 0U);
-			SET_DATA(pbuf, uint16_t, 100U);
-			SET_DATA(pbuf, uint16_t, 1U);
-
-			USBD_CtlSendData(pdev, haudio->control.data, MIN(req->wLength, USB_MAX_EP0_SIZE));
+			SET_DATA(pbuf, uint16_t, AUDIO_MIN_VOL);
+			SET_DATA(pbuf, uint16_t, AUDIO_MAX_VOL);
+			SET_DATA(pbuf, uint16_t, AUDIO_VOL_RES);
 		}
 		else
 		{
@@ -695,7 +689,7 @@ static void AUDIO_REQ_GetRange(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *r
 		break;
 	}
 
-
+	USBD_CtlSendData(pdev, haudio->control.data, MIN(req->wLength, USB_MAX_EP0_SIZE));
 }
 
 #ifndef USE_USBD_COMPOSITE

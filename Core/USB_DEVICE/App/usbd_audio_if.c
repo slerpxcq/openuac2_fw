@@ -188,21 +188,21 @@ static int8_t AUDIO_DeInit_HS(uint32_t options)
 static int8_t AUDIO_AudioCmd_HS(uint8_t* pbuf, uint32_t size, uint8_t cmd)
 {
   /* USER CODE BEGIN 11 */
-	UNUSED(pbuf);
-	UNUSED(size);
-
   switch(cmd)
   {
 	case AUDIO_CMD_PLAY:
 		s_ItfState = ITF_PLAYING;
-//		LL_GPIO_SetOutputPin(LED2_GPIO_Port, LED2_Pin);
 		break;
+
 	case AUDIO_CMD_STOP:
 		s_ItfState = ITF_STOPPED;
-//		LL_GPIO_ResetOutputPin(LED2_GPIO_Port, LED2_Pin);
 		break;
+
+	case AUDIO_CMD_UPDATE_FREQ:
+		USBD_DbgLog("%s: freq=%u", __FUNCTION__, *(uint32_t*)pbuf);
+		break;
+
 	default:
-//		USBD_DbgLog("%s: Unsupported command", __FUNCTION__);
 		return USBD_FAIL;
   }
 
@@ -218,8 +218,7 @@ static int8_t AUDIO_AudioCmd_HS(uint8_t* pbuf, uint32_t size, uint8_t cmd)
 static int8_t AUDIO_VolumeCtl_HS(uint8_t vol)
 {
   /* USER CODE BEGIN 12 */
-	USBD_DbgLog("%s: To be implemented", __FUNCTION__);
-  UNUSED(vol);
+	USBD_DbgLog("%s: volume=%u", __FUNCTION__, vol);
   return (USBD_OK);
   /* USER CODE END 12 */
 }
@@ -232,8 +231,7 @@ static int8_t AUDIO_VolumeCtl_HS(uint8_t vol)
 static int8_t AUDIO_MuteCtl_HS(uint8_t cmd)
 {
   /* USER CODE BEGIN 13 */
-	USBD_DbgLog("%s: %u", __FUNCTION__, cmd);
-  UNUSED(cmd);
+	USBD_DbgLog("%s: mute=%u", __FUNCTION__, cmd);
   return (USBD_OK);
   /* USER CODE END 13 */
 }
