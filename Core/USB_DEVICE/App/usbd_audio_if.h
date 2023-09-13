@@ -74,7 +74,8 @@
   */
 
 /* USER CODE BEGIN EXPORTED_MACRO */
-
+#define PLLI2SQ_48K		98304000UL
+#define PLLI2SQ_44K1	90316800UL
 /* USER CODE END EXPORTED_MACRO */
 
 /**
@@ -87,7 +88,7 @@
   */
 
 /** AUDIO_IF Interface callback. */
-extern USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops_HS;
+extern USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
 
@@ -106,13 +107,13 @@ extern USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops_HS;
   * @brief  Manages the DMA full transfer complete event.
   * @retval None
   */
-void TransferComplete_CallBack_HS(void);
+void AUDIO_XferCpltCallback(void);
 
 /**
   * @brief  Manages the DMA half transfer complete event.
   * @retval None
   */
-void HalfTransfer_CallBack_HS(void);
+void AUDIO_XferHalfCallback(void);
 
 /* USER CODE BEGIN EXPORTED_FUNCTIONS */
 typedef enum _AudioItfState

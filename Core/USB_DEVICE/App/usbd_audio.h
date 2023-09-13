@@ -41,8 +41,12 @@ extern "C" {
 /** @defgroup USBD_AUDIO_Exported_Defines
   * @{
   */
+
+#define AUDIO_48K_FEEDBACK_VALUE											0x60000
+#define AUDIO_44K1_FEEDBACK_VALUE											0x58333
+
 #define AUDIO_MIN_FREQ																44100U
-#define AUDIO_MAX_FREQ																384000U
+#define AUDIO_MAX_FREQ																768000U
 #define	AUDIO_FREQ_RES																1U
 #define AUDIO_MIN_VOL																	0U
 #define AUDIO_MAX_VOL																	100U
@@ -53,26 +57,20 @@ extern "C" {
 
 #define AUDIO_WTOTALLENGTH														60U
 
-#define USB_AUDIO_CONFIG_DESC_SIZE                    148U
+#define USB_AUDIO_CONFIG_DESC_SIZE                    201U
 
 #define USB_AUDIO_DESC_SIZE                           0x09U
 
 /* Audio Control Interface Descriptor Subtypes */
-#define FORMAT_TYPE_I			                           0x01U
+#define FORMAT_TYPE_I			                           	0x01U
 
 #define AUDIO_REQ_CUR																	0x01U
 #define AUDIO_REQ_RANGE																0x02U
 
-#define AUDIO_CHANNEL_NUM															2U
-#define AUDIO_BIT_RES																	32U
-#define AUDIO_OUT_PACKET_SIZE													(uint16_t)(((USBD_AUDIO_FREQ * AUDIO_CHANNEL_NUM * (AUDIO_BIT_RES / 8U)) / 1000U))
 #define FEEDBACK_PACKET_SIZE													4U
 
-/* Number of sub-packets in the audio transfer buffer. You can modify this value but always make sure
-  that it is an even number and higher than 3 */
-#define AUDIO_OUT_PACKET_NUM                          100U
-/* Total size of the audio transfer buffer */
-#define AUDIO_TOTAL_BUF_SIZE                          ((uint16_t)(AUDIO_OUT_PACKET_SIZE * AUDIO_OUT_PACKET_NUM))
+#define AUDIO_BUFFER_PACKET_NUM												80U
+#define AUDIO_BUF_SIZE                        				40960U
 
 // Audio20 appendix definitions
 #define AUDIO_FUNCTION 																AUDIO
@@ -143,7 +141,9 @@ typedef enum
   AUDIO_CMD_START = 1,
   AUDIO_CMD_PLAY,
   AUDIO_CMD_STOP,
-	AUDIO_CMD_UPDATE_FREQ,
+	AUDIO_CMD_FREQ,
+	AUDIO_CMD_MUTE,
+	AUDIO_CMD_VOLUME,
 } AUDIO_CMD_TypeDef;
 
 /**
@@ -156,29 +156,28 @@ typedef enum
   */
 typedef struct
 {
-  uint8_t cmd;
   uint8_t data[USB_MAX_EP0_SIZE];
+  uint8_t cmd;
   uint8_t len;
   uint8_t unit;
 } USBD_AUDIO_ControlTypeDef;
 
-
 typedef struct
 {
-  uint32_t alt_setting;
-  AudioBuffer* aud_buf;
   USBD_AUDIO_ControlTypeDef control;
+  AudioBuffer aud_buf;
+  uint32_t alt_setting;
+  uint32_t sam_freq;
+  uint32_t packet_size;
+  uint8_t bit_depth;
 } USBD_AUDIO_HandleTypeDef;
 
 typedef struct
 {
-  int8_t (*Init)(uint32_t AudioFreq, uint32_t Volume, uint32_t options);
-  int8_t (*DeInit)(uint32_t options);
+  int8_t (*Init)();
+  int8_t (*DeInit)();
   int8_t (*AudioCmd)(uint8_t *pbuf, uint32_t size, uint8_t cmd);
-  int8_t (*VolumeCtl)(uint8_t vol);
-  int8_t (*MuteCtl)(uint8_t cmd);
-  int8_t (*PeriodicTC)(uint8_t *pbuf, uint32_t size, uint8_t cmd);
-  int8_t (*GetState)(void);
+  int8_t (*GetState)();
 } USBD_AUDIO_ItfTypeDef;
 
 

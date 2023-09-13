@@ -1,300 +1,103 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : usbd_audio_if.c
-  * @version        : v1.0_Cube
-  * @brief          : Generic media access layer.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2023 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
- /* USER CODE END Header */
-
-/* Includes ------------------------------------------------------------------*/
 #include "usbd_audio_if.h"
 #include "main.h"
 
-/* USER CODE BEGIN INCLUDE */
-
-/* USER CODE END INCLUDE */
-
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE END PV */
-
-/** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
-  * @brief Usb device library.
-  * @{
-  */
-
-/** @addtogroup USBD_AUDIO_IF
-  * @{
-  */
-
-/** @defgroup USBD_AUDIO_IF_Private_TypesDefinitions USBD_AUDIO_IF_Private_TypesDefinitions
-  * @brief Private types.
-  * @{
-  */
-
-/* USER CODE BEGIN PRIVATE_TYPES */
-
-/* USER CODE END PRIVATE_TYPES */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_AUDIO_IF_Private_Defines USBD_AUDIO_IF_Private_Defines
-  * @brief Private defines.
-  * @{
-  */
-
-/* USER CODE BEGIN PRIVATE_DEFINES */
-
-/* USER CODE END PRIVATE_DEFINES */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_AUDIO_IF_Private_Macros USBD_AUDIO_IF_Private_Macros
-  * @brief Private macros.
-  * @{
-  */
-
-/* USER CODE BEGIN PRIVATE_MACRO */
-
-/* USER CODE END PRIVATE_MACRO */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_AUDIO_IF_Private_Variables USBD_AUDIO_IF_Private_Variables
-  * @brief Private variables.
-  * @{
-  */
-
-/* USER CODE BEGIN PRIVATE_VARIABLES */
-
-/* USER CODE END PRIVATE_VARIABLES */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_AUDIO_IF_Exported_Variables USBD_AUDIO_IF_Exported_Variables
-  * @brief Public variables.
-  * @{
-  */
-
 extern USBD_HandleTypeDef hUsbDeviceHS;
-static AudioItfState s_ItfState = ITF_STOPPED;
+extern I2S_HandleTypeDef hi2s2;
 
-uint32_t g_TxSampleCnt;
+static AudioItfState s_ItfState;
 
-/* USER CODE BEGIN EXPORTED_VARIABLES */
+static int8_t AUDIO_Init();
+static int8_t AUDIO_DeInit();
+static int8_t AUDIO_AudioCmd(uint8_t* pbuf, uint32_t size, uint8_t cmd);
+static int8_t AUDIO_GetState();
 
-/* USER CODE END EXPORTED_VARIABLES */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_AUDIO_IF_Private_FunctionPrototypes USBD_AUDIO_IF_Private_FunctionPrototypes
-  * @brief Private functions declaration.
-  * @{
-  */
-
-static int8_t AUDIO_Init_HS(uint32_t AudioFreq, uint32_t Volume, uint32_t options);
-static int8_t AUDIO_DeInit_HS(uint32_t options);
-static int8_t AUDIO_AudioCmd_HS(uint8_t* pbuf, uint32_t size, uint8_t cmd);
-static int8_t AUDIO_VolumeCtl_HS(uint8_t vol);
-static int8_t AUDIO_MuteCtl_HS(uint8_t cmd);
-static int8_t AUDIO_PeriodicTC_HS(uint8_t *pbuf, uint32_t size, uint8_t cmd);
-static int8_t AUDIO_GetState_HS(void);
-
-/* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
-
-/* USER CODE END PRIVATE_FUNCTIONS_DECLARATION */
-
-/**
-  * @}
-  */
-
-USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops_HS =
+USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops =
 {
-  AUDIO_Init_HS,
-  AUDIO_DeInit_HS,
-  AUDIO_AudioCmd_HS,
-  AUDIO_VolumeCtl_HS,
-  AUDIO_MuteCtl_HS,
-  AUDIO_PeriodicTC_HS,
-  AUDIO_GetState_HS,
+  AUDIO_Init,
+  AUDIO_DeInit,
+  AUDIO_AudioCmd,
+  AUDIO_GetState,
 };
 
-/* Private functions ---------------------------------------------------------*/
-/**
-  * @brief  Initializes the AUDIO media low layer over the USB HS IP
-  * @param  AudioFreq: Audio frequency used to play the audio stream.
-  * @param  Volume: Initial volume level (from 0 (Mute) to 100 (Max))
-  * @param  options: Reserved for future use
-  * @retval USBD_OK if all operations are OK else USBD_FAIL
-  */
-static int8_t AUDIO_Init_HS(uint32_t AudioFreq, uint32_t Volume, uint32_t options)
+static void AUDIO_SetSamFreq(uint32_t freq)
 {
-  /* USER CODE BEGIN 9 */
-	USBD_DbgLog("%s: ", __FUNCTION__);
+	__HAL_I2S_DISABLE(&hi2s2);
+	LL_RCC_PLLI2S_Disable();
+
+	if (freq % 48000U == 0)
+	{
+		LL_RCC_PLLI2S_ConfigDomain_I2S(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLI2SM_DIV_16, 128, LL_RCC_PLLI2SR_DIV_2);
+		hi2s2.Instance->I2SPR &= ~SPI_I2SPR_I2SDIV_Msk;
+		hi2s2.Instance->I2SPR |= (PLLI2SQ_48K / (freq << 7U)) & SPI_I2SPR_I2SDIV_Msk;
+	}
+	else
+	{
+		LL_RCC_PLLI2S_ConfigDomain_I2S(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLI2SM_DIV_20, 147, LL_RCC_PLLI2SR_DIV_2);
+		hi2s2.Instance->I2SPR &= ~SPI_I2SPR_I2SDIV_Msk;
+		hi2s2.Instance->I2SPR |= (PLLI2SQ_44K1 / (freq << 7U)) & SPI_I2SPR_I2SDIV_Msk;
+	}
+
+	LL_RCC_PLLI2S_Enable();
+	while(!LL_RCC_PLLI2S_IsReady());
+	__HAL_I2S_ENABLE(&hi2s2);
+}
+
+static int8_t AUDIO_Init()
+{
 	s_ItfState = ITF_STOPPED;
-	LL_TIM_EnableCounter(TIM3);
-  return (USBD_OK);
-  /* USER CODE END 9 */
+
+  return USBD_OK;
 }
 
-/**
-  * @brief  DeInitializes the AUDIO media low layer
-  * @param  options: Reserved for future use
-  * @retval USBD_OK if all operations are OK else USBD_FAIL
-  */
-static int8_t AUDIO_DeInit_HS(uint32_t options)
+static int8_t AUDIO_DeInit()
 {
-  /* USER CODE BEGIN 10 */
-	USBD_DbgLog("%s: To be implemented", __FUNCTION__);
-  UNUSED(options);
-  return (USBD_OK);
-  /* USER CODE END 10 */
+	s_ItfState = ITF_STOPPED;
+
+  return USBD_OK;
 }
 
-/**
-  * @brief  Handles AUDIO command.
-  * @param  pbuf: Pointer to buffer of data to be sent
-  * @param  size: Number of data to be sent (in bytes)
-  * @param  cmd: Command opcode
-  * @retval USBD_OK if all operations are OK else USBD_FAIL
-  */
-static int8_t AUDIO_AudioCmd_HS(uint8_t* pbuf, uint32_t size, uint8_t cmd)
+static int8_t AUDIO_AudioCmd(uint8_t* pbuf, uint32_t size, uint8_t cmd)
 {
-  /* USER CODE BEGIN 11 */
-  switch(cmd)
+	USBD_AUDIO_HandleTypeDef* haudio = hUsbDeviceHS.pClassDataCmsit[hUsbDeviceHS.classId];
+	AudioBuffer* aud_buf = &haudio->aud_buf;
+
+  switch (cmd)
   {
+  case AUDIO_CMD_START:
+  	break;
+
 	case AUDIO_CMD_PLAY:
+		HAL_I2S_Transmit_DMA(&hi2s2, (void*)aud_buf->mem, aud_buf->capacity);
 		s_ItfState = ITF_PLAYING;
 		break;
 
 	case AUDIO_CMD_STOP:
+		HAL_I2S_DMAStop(&hi2s2);
+		AudioBuffer_Reset(aud_buf, 0U);
 		s_ItfState = ITF_STOPPED;
 		break;
 
-	case AUDIO_CMD_UPDATE_FREQ:
-		USBD_DbgLog("%s: freq=%u", __FUNCTION__, *(uint32_t*)pbuf);
+	case AUDIO_CMD_FREQ:
+		AUDIO_SetSamFreq(*(uint32_t*)pbuf);
+		break;
+
+	case AUDIO_CMD_MUTE:
+		break;
+
+	case AUDIO_CMD_VOLUME:
 		break;
 
 	default:
 		return USBD_FAIL;
   }
 
-  return (USBD_OK);
-  /* USER CODE END 11 */
+  return USBD_OK;
 }
 
-/**
-  * @brief  Controls AUDIO Volume.
-  * @param  vol: volume level (0..100)
-  * @retval USBD_OK if all operations are OK else USBD_FAIL
-  */
-static int8_t AUDIO_VolumeCtl_HS(uint8_t vol)
-{
-  /* USER CODE BEGIN 12 */
-	USBD_DbgLog("%s: volume=%u", __FUNCTION__, vol);
-  return (USBD_OK);
-  /* USER CODE END 12 */
-}
 
-/**
-  * @brief  Controls AUDIO Mute.
-  * @param  cmd: command opcode
-  * @retval USBD_OK if all operations are OK else USBD_FAIL
-  */
-static int8_t AUDIO_MuteCtl_HS(uint8_t cmd)
+static int8_t AUDIO_GetState()
 {
-  /* USER CODE BEGIN 13 */
-	USBD_DbgLog("%s: mute=%u", __FUNCTION__, cmd);
-  return (USBD_OK);
-  /* USER CODE END 13 */
-}
-
-/**
-  * @brief  AUDIO_PeriodicTC_HS
-  * @param  cmd: command opcode
-  * @retval USBD_OK if all operations are OK else USBD_FAIL
-  */
-static int8_t AUDIO_PeriodicTC_HS(uint8_t *pbuf, uint32_t size, uint8_t cmd)
-{
-  /* USER CODE BEGIN 14 */
-  UNUSED(pbuf);
-  UNUSED(size);
-  UNUSED(cmd);
-  return (USBD_OK);
-  /* USER CODE END 14 */
-}
-
-/**
-  * @brief  Gets AUDIO state.
-  * @retval USBD_OK if all operations are OK else USBD_FAIL
-  */
-static int8_t AUDIO_GetState_HS(void)
-{
-  /* USER CODE BEGIN 15 */
   return s_ItfState;
-  /* USER CODE END 15 */
 }
 
-/**
-  * @brief  Manages the DMA full transfer complete event.
-  * @retval None
-  */
-void TransferComplete_CallBack_HS(void)
-{
-	if (s_ItfState == ITF_PLAYING)
-	{
-		USBD_AUDIO_Sync(&hUsbDeviceHS);
-	}
-	g_TxSampleCnt += 1;
-}
 
-/**
-  * @brief  Manages the DMA Half transfer complete event.
-  * @retval None
-  */
-void HalfTransfer_CallBack_HS(void)
-{
-  /* USER CODE BEGIN 17 */
-//	USBD_DbgLog("%s: To be implemented", __FUNCTION__);
-//  USBD_AUDIO_Sync(&hUsbDeviceHS, AUDIO_OFFSET_HALF);
-  /* USER CODE END 17 */
-}
-
-/* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
-
-/* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */

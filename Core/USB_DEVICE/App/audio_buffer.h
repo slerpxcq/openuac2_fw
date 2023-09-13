@@ -13,7 +13,6 @@ typedef enum
 typedef struct
 {
 	uint8_t* mem;
-	uint8_t lock;
 	int32_t capacity;
 	int32_t size;
 	int32_t wr_ptr;
@@ -22,6 +21,7 @@ typedef struct
 } AudioBuffer;
 
 void AudioBuffer_Init(AudioBuffer* ab, void* mem, int32_t capacity);
+void AudioBuffer_Reset(AudioBuffer* ab, int32_t capacity);
 AudioBufferState AudioBuffer_PostRecieve(AudioBuffer* ab, int32_t rxSize);
 AudioBufferState AudioBuffer_PostTransmit(AudioBuffer* ab, int32_t txSize);
 

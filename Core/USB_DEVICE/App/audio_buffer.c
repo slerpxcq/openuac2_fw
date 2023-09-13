@@ -3,20 +3,21 @@
 
 void AudioBuffer_Init(AudioBuffer* ab, void* mem, int32_t capacity)
 {
-	ab->state = AB_OK;
 	ab->mem = mem;
-	ab->lock = 0;
-	ab->capacity = capacity;
+	AudioBuffer_Reset(ab, capacity);
+}
+
+void AudioBuffer_Reset(AudioBuffer* ab, int32_t capacity)
+{
+	ab->state = AB_OK;
 	ab->size = 0;
 	ab->wr_ptr = 0;
 	ab->rd_ptr = 0;
+	ab->capacity = capacity;
 }
 
 AudioBufferState AudioBuffer_PostRecieve(AudioBuffer* ab, int32_t rxSize)
 {
-	while (ab->lock);
-	ab->lock = 1;
-
 	if (ab->size + rxSize < ab->capacity)
 	{
 		ab->size += rxSize;
@@ -41,15 +42,11 @@ AudioBufferState AudioBuffer_PostRecieve(AudioBuffer* ab, int32_t rxSize)
 	}
 
 Exit:
-	ab->lock = 0;
 	return ab->state;
 }
 
 AudioBufferState AudioBuffer_PostTransmit(AudioBuffer* ab, int32_t txSize)
 {
-	while (ab->lock);
-	ab->lock = 1;
-
 	if (ab->size - txSize >= 0)
 	{
 		ab->size -= txSize;
@@ -66,7 +63,6 @@ AudioBufferState AudioBuffer_PostTransmit(AudioBuffer* ab, int32_t txSize)
 		ab->rd_ptr = 0;
 
 Exit:
-	ab->lock = 0;
 	return ab->state;
 }
 

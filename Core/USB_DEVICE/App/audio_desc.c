@@ -2,7 +2,7 @@
 
 #include "usbd_audio.h"
 
-__ALIGN_BEGIN uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZE] __ALIGN_END =
+const uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZE] __attribute__ ((aligned (4))) =
 {
   /* Configuration 1 */
   0x09,                                 /* bLength */
@@ -117,22 +117,22 @@ __ALIGN_BEGIN uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZE] __ALIGN_END
 	// Alternate setting 0
 	0x09,													// bLength
 	USB_DESC_TYPE_INTERFACE,			// bDescriptorType
-	AS_INTERFACE_NUM,													// bInterfaceNumber
+	AS_INTERFACE_NUM,							// bInterfaceNumber
 	0x00, 												// bAlternateSetting
 	0x00,													// bNumEndpoints
 	AUDIO,												// bInterfaceClass
-	AUDIOSTREAMING,							// bInterfaceSubClass
+	AUDIOSTREAMING,								// bInterfaceSubClass
 	IP_VERSION_02_00,							// bInterfaceProtocol
 	0x00,													// iInterface
 
 	// Alternate setting 1
 	0x09,													// bLength
 	USB_DESC_TYPE_INTERFACE,			// bDescriptorType
-	AS_INTERFACE_NUM,													// bInterfaceNumber
+	AS_INTERFACE_NUM,							// bInterfaceNumber
 	0x01, 												// bAlternateSetting
 	0x02,													// bNumEndpoints
 	AUDIO,												// bInterfaceClass
-	AUDIOSTREAMING,							// bInterfaceSubClass
+	AUDIOSTREAMING,								// bInterfaceSubClass
 	IP_VERSION_02_00,							// bInterfaceProtocol
 	0x00,													// iInterface
 
@@ -190,11 +190,78 @@ __ALIGN_BEGIN uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZE] __ALIGN_END
 	FEEDBACK_EP_ATTRIB,						// bmAttributes
 	LOBYTE(FEEDBACK_PACKET_SIZE),	// wMaxPacketSize
 	HIBYTE(FEEDBACK_PACKET_SIZE),
-	FEEDBACK_HS_BINTERVAL					// bInterval
+	FEEDBACK_HS_BINTERVAL,					// bInterval
+
+	// Alternate setting 2
+	0x09,													// bLength
+	USB_DESC_TYPE_INTERFACE,			// bDescriptorType
+	AS_INTERFACE_NUM,							// bInterfaceNumber
+	0x02, 												// bAlternateSetting
+	0x02,													// bNumEndpoints
+	AUDIO,												// bInterfaceClass
+	AUDIOSTREAMING,								// bInterfaceSubClass
+	IP_VERSION_02_00,							// bInterfaceProtocol
+	0x00,													// iInterface
+
+	// Class specific
+	16U,													// bLength
+	CS_INTERFACE,									// bDescriptorType
+	AS_GENERAL,										// bDescriptorSubtype
+	INPUT_TERMINAL_ID,						// bTerminalLink
+	0x00,													// bmControls
+	FORMAT_TYPE_I,								// bFormatType
+	0x01,													// bmFormats: PCM; Check Frmts20 section A.2
+	0x00,
+	0x00,
+	0x00,
+	0x02,													// bNrChannels
+	0x03,													// bmChannelConfig: FL, FR; See Audio20 section 4.1
+	0x00,
+	0x00,
+	0x00,
+	0x00,													// iChannelNames
+
+	// Format type I descriptor
+	0x06,													// bLength
+	CS_INTERFACE,									// bDescriptorType
+	FORMAT_TYPE,									// bDescriptorSubtype
+	FORMAT_TYPE_I,								// bFormatType
+	0x04,													// bSubslotSize
+	24U,													// bBitResolution
+
+	// AS audio data endpoint descriptor: see Audio20 section 4.10
+	// Standard
+	0x07,													// bLength
+	USB_DESC_TYPE_ENDPOINT,				// bDescriptorType
+	STREAMING_EP_ADDR,						// bEndpointAddress
+	STREAMING_EP_ATTRIB,					// bmAttributes
+	LOBYTE(USB_HS_MAX_PACKET_SIZE),				// wMaxPacketSize
+	HIBYTE(USB_HS_MAX_PACKET_SIZE),
+	STREAMING_HS_BINTERVAL,						// bInterval
+
+	// Class specific
+	0x08,													// bLength
+	CS_ENDPOINT,									// bDescriptorType
+	EP_GENERAL,										// bDescriptorSubtype
+	0x00,													// bmAttributes
+	0x00,													// bmControls
+	0x00,													// bLockDelayUnits
+	0x00,													// wLockDelay
+	0x00,
+
+	// AS audio feedback endpoint descriptor
+	// Standard
+	0x07, 												// bLength
+	USB_DESC_TYPE_ENDPOINT,				// bDescriptorType
+	FEEDBACK_EP_ADDR,							// bEndpointAddress
+	FEEDBACK_EP_ATTRIB,						// bmAttributes
+	LOBYTE(FEEDBACK_PACKET_SIZE),	// wMaxPacketSize
+	HIBYTE(FEEDBACK_PACKET_SIZE),
+	FEEDBACK_HS_BINTERVAL,					// bInterval
 };
 
 /* USB Standard Device Descriptor */
-__ALIGN_BEGIN uint8_t USBD_AUDIO_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_DESC] __ALIGN_END =
+const uint8_t USBD_AUDIO_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_DESC] __attribute__ ((aligned (4))) =
 {
   USB_LEN_DEV_QUALIFIER_DESC,			// bLength
   USB_DESC_TYPE_DEVICE_QUALIFIER,	// bDescriptorType
