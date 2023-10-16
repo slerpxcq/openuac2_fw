@@ -16,13 +16,12 @@ typedef struct
 	int32_t capacity;
 	int32_t size;
 	int32_t wr_ptr;
-	int32_t rd_ptr;
-	AudioBufferState state;
+	uint8_t state;
 } AudioBuffer;
 
-void AudioBuffer_Init(AudioBuffer* ab, void* mem, int32_t capacity);
-void AudioBuffer_Reset(AudioBuffer* ab, int32_t capacity);
-AudioBufferState AudioBuffer_PostRecieve(AudioBuffer* ab, int32_t rxSize);
-AudioBufferState AudioBuffer_PostTransmit(AudioBuffer* ab, int32_t txSize);
+void AudioBuffer_Init(AudioBuffer* ab, uint32_t capacity);
+void AudioBuffer_Reset(AudioBuffer* ab, uint32_t capacity);
+uint8_t AudioBuffer_Recieve(AudioBuffer* ab, uint32_t rxSize);
+uint8_t AudioBuffer_Sync(AudioBuffer* ab, uint32_t txSize);
 
 #endif // _AUDIO_BUFFER_H_

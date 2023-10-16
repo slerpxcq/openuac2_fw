@@ -5,15 +5,10 @@
 #include "usbd_audio_if.h"
 #include "audio_desc.h"
 
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal_def.h"
-#include "stm32f4xx_ll_usb.h"
-
 #ifdef USE_USBD_COMPOSITE
 #error "Composite device is unsupported."
 #endif
 
-static uint8_t USBD_AUDIO_PrepareOUT(USBD_HandleTypeDef* pdev, uint8_t epnum, uint8_t incrRxAddr);
 static uint8_t USBD_AUDIO_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t USBD_AUDIO_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t USBD_AUDIO_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
@@ -31,8 +26,6 @@ static void AUDIO_REQ_SetCurrent(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef 
 static void AUDIO_REQ_GetRange(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 static void *USBD_AUDIO_GetAudioHeaderDesc(uint8_t *pConfDesc);
 
-__ALIGN_BEGIN static uint32_t s_AudFbVal __ALIGN_END;
-__ALIGN_BEGIN static uint8_t s_AudBufMem[AUDIO_BUF_SIZE] __ALIGN_END;
 static USBD_AUDIO_HandleTypeDef s_Haudio;
 
 USBD_ClassTypeDef USBD_AUDIO =
@@ -53,34 +46,51 @@ USBD_ClassTypeDef USBD_AUDIO =
   USBD_AUDIO_GetDeviceQualifierDesc,
 };
 
-void USBD_AUDIO_UpdateAudFbValue(USBD_HandleTypeDef* pdev)
+static uint8_t USBD_AUDIO_IsDoPStream(USBD_HandleTypeDef* pdev)
 {
 	USBD_AUDIO_HandleTypeDef* haudio = pdev->pClassDataCmsit[pdev->classId];
+	uint32_t* buf = (uint32_t*)&haudio->aud_buf.mem[haudio->aud_buf.wr_ptr];
 
-	if (haudio->sam_freq % 48000U == 0)
+	const uint8_t marker_table[] = { 0x05, 0xfa };
+
+	uint8_t idx = 0;
+
+	switch (*buf >> 24)
 	{
-		s_AudFbVal = (haudio->sam_freq / 48000U) * AUDIO_48K_FEEDBACK_VALUE;
-	}
-	else
-	{
-		s_AudFbVal = (haudio->sam_freq / 44100U) * AUDIO_44K1_FEEDBACK_VALUE;
+	case 0x05:
+		idx = 0;
+		break;
+
+	case 0xfa:
+		idx = 1;
+		break;
+
+	default:
+		return AUDIO_FORMAT_PCM;
+		break;
 	}
 
-	s_AudFbVal -= haudio->aud_buf.size - (haudio->aud_buf.capacity >> 1U);
+	for (uint32_t i = 0; i < AUDIO_DOP_DETECT_COUNT; i += 2)
+	{
+		if (buf[i] >> 24 != marker_table[idx] || buf[i + 1] >> 24 != marker_table[idx])
+		{
+			return AUDIO_FORMAT_PCM;
+		}
+
+		idx = !idx;
+	}
+
+	return AUDIO_FORMAT_DSD;
 }
 
-static uint8_t USBD_AUDIO_PrepareOUT(USBD_HandleTypeDef* pdev, uint8_t epnum, uint8_t incrRxAddr)
+void USBD_AUDIO_UpdateFB(USBD_HandleTypeDef *pdev)
 {
 	USBD_AUDIO_HandleTypeDef* haudio = pdev->pClassDataCmsit[pdev->classId];
 
-	uint16_t packetSize = (uint16_t)USBD_LL_GetRxDataSize(pdev, epnum);
+	int64_t tmp = (haudio->aud_buf.size - (haudio->aud_buf.capacity >> 1U)) << 3U;
 
-	if (incrRxAddr != 0U)
-	{
-		AudioBuffer_PostRecieve(&haudio->aud_buf, packetSize);
-	}
-
-	return USBD_LL_PrepareReceive(pdev, STREAMING_EP_ADDR, &haudio->aud_buf.mem[haudio->aud_buf.wr_ptr], USB_HS_MAX_PACKET_SIZE);
+	tmp = CLAMP(tmp, -65535, 65535);
+	haudio->feedback_value = haudio->feedback_base - tmp;
 }
 
 static uint8_t USBD_AUDIO_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
@@ -110,18 +120,18 @@ static uint8_t USBD_AUDIO_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
   pdev->ep_in[FEEDBACK_EP_NUM].is_used = 1U;
 
   haudio->alt_setting = 0U;
-  AudioBuffer_Init(&haudio->aud_buf, s_AudBufMem, 0);
+  AudioBuffer_Init(&haudio->aud_buf, 0);
 
   /* Initialize the Audio output Hardware layer */
-  USBD_AUDIO_ItfTypeDef* audItf = pdev->pUserData[pdev->classId];
-  if (audItf->Init() != USBD_OK)
+  USBD_AUDIO_ItfTypeDef* itf = pdev->pUserData[pdev->classId];
+  if (itf->Init() != USBD_OK)
   {
     return USBD_FAIL;
   }
 
   /* Prepare Out endpoint to receive 1st packet */
-  USBD_LL_PrepareReceive(pdev, STREAMING_EP_ADDR, &haudio->aud_buf.mem[haudio->aud_buf.wr_ptr], USB_HS_MAX_PACKET_SIZE);
-  USBD_LL_Transmit(pdev, FEEDBACK_EP_ADDR, (void*)&s_AudFbVal, FEEDBACK_PACKET_SIZE);
+  USBD_LL_PrepareReceive(pdev, STREAMING_EP_ADDR, (uint8_t*)haudio->pkt_buf, USB_HS_MAX_PACKET_SIZE);
+  USBD_LL_Transmit(pdev, FEEDBACK_EP_ADDR, (uint8_t*)&haudio->feedback_value, FEEDBACK_PACKET_SIZE);
 
   return USBD_OK;
 }
@@ -285,9 +295,11 @@ static uint8_t *USBD_AUDIO_GetCfgDesc(uint16_t *length)
 
 static uint8_t USBD_AUDIO_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
+	USBD_AUDIO_HandleTypeDef* haudio = pdev->pClassDataCmsit[pdev->classId];
+
 	if (epnum == FEEDBACK_EP_NUM)
 	{
-		USBD_LL_Transmit(pdev, FEEDBACK_EP_ADDR, (void*)&s_AudFbVal, FEEDBACK_PACKET_SIZE);
+		USBD_LL_Transmit(pdev, FEEDBACK_EP_ADDR, (uint8_t*)&haudio->feedback_value, FEEDBACK_PACKET_SIZE);
 	}
 
   return (uint8_t)USBD_OK;
@@ -296,7 +308,7 @@ static uint8_t USBD_AUDIO_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 static uint8_t USBD_AUDIO_EP0_RxReady(USBD_HandleTypeDef *pdev)
 {
 	USBD_AUDIO_HandleTypeDef* haudio = pdev->pClassDataCmsit[pdev->classId];
-	USBD_AUDIO_ItfTypeDef* audItf = pdev->pUserData[pdev->classId];
+	USBD_AUDIO_ItfTypeDef* itf = pdev->pUserData[pdev->classId];
 
 	switch (haudio->control.unit)
 	{
@@ -305,11 +317,22 @@ static uint8_t USBD_AUDIO_EP0_RxReady(USBD_HandleTypeDef *pdev)
 		{
 			haudio->sam_freq = *(uint32_t*)haudio->control.data;
 
-			haudio->packet_size = (haudio->sam_freq % 48000U == 0) ? (haudio->sam_freq / 1000U) : (haudio->sam_freq / 147U * 160U / 1000U);
+			uint32_t packetSize = (haudio->sam_freq % 48000U == 0) ? (haudio->sam_freq / 1000U) : (haudio->sam_freq / 147U * 160U / 1000U);
+			uint32_t audBufCap = packetSize * AUDIO_BUFFER_PACKET_NUM;
 
-			AudioBuffer_Reset(&haudio->aud_buf, haudio->packet_size * AUDIO_BUFFER_PACKET_NUM);
+			AudioBuffer_Reset(&haudio->aud_buf, audBufCap);
 
-			audItf->AudioCmd(haudio->control.data, haudio->control.len, AUDIO_CMD_FREQ);
+			if (haudio->sam_freq % 48000U == 0)
+			{
+				haudio->feedback_base = haudio->sam_freq / 48000U * AUDIO_48K_FEEDBACK_VALUE;
+			}
+			else
+			{
+				haudio->feedback_base = haudio->sam_freq / 44100U * AUDIO_44K1_FEEDBACK_VALUE;
+			}
+			haudio->feedback_value = haudio->feedback_base;
+
+			itf->AudioCmd(haudio->control.data, haudio->control.len, AUDIO_CMD_FREQ);
 		}
 		else
 		{
@@ -321,11 +344,11 @@ static uint8_t USBD_AUDIO_EP0_RxReady(USBD_HandleTypeDef *pdev)
 		switch (haudio->control.cmd)
 		{
 		case FU_MUTE_CONTROL:
-			audItf->AudioCmd(haudio->control.data, haudio->control.len, AUDIO_CMD_MUTE);
+			itf->AudioCmd(haudio->control.data, haudio->control.len, AUDIO_CMD_MUTE);
 			break;
 
 		case FU_VOLUME_CONTROL:
-			audItf->AudioCmd(haudio->control.data, haudio->control.len, AUDIO_CMD_VOLUME);
+			itf->AudioCmd(haudio->control.data, haudio->control.len, AUDIO_CMD_VOLUME);
 			break;
 
 		default:
@@ -357,33 +380,39 @@ static uint8_t USBD_AUDIO_SOF(USBD_HandleTypeDef *pdev)
 void USBD_AUDIO_Sync(USBD_HandleTypeDef *pdev)
 {
   USBD_AUDIO_HandleTypeDef* haudio = pdev->pClassDataCmsit[pdev->classId];
-  USBD_AUDIO_ItfTypeDef* audItf = pdev->pUserData[pdev->classId];
+  USBD_AUDIO_ItfTypeDef* itf = pdev->pUserData[pdev->classId];
 
-  AudioBuffer_PostTransmit(&haudio->aud_buf, 2U * sizeof(uint32_t));
+  if (itf->GetState() == ITF_STOPPED)
+  {
+  	return;
+  }
 
-  if (haudio->aud_buf.state == AB_UDFL)
+  AudioBuffer_Sync(&haudio->aud_buf, AUDIO_SYNC_CLK_DIV << 3);
+
+  USBD_AUDIO_UpdateFB(pdev);
+
+  if ((haudio->aud_buf.state == AB_UDFL) && (itf->GetState() == ITF_PLAYING))
 	{
-		LL_GPIO_SetOutputPin(LED1_GPIO_Port, LED1_Pin);
+		itf->AudioCmd(NULL, 0, AUDIO_CMD_STOP);
 	}
-	else
+
+  if (haudio->aud_buf.size < haudio->aud_buf.capacity >> 2)
 	{
 		LL_GPIO_ResetOutputPin(LED1_GPIO_Port, LED1_Pin);
 	}
-
-  if (haudio->aud_buf.state == AB_UDFL)
+  else
   {
-  	if (audItf->GetState() == ITF_PLAYING)
-  	{
-  		audItf->AudioCmd(NULL, 0, AUDIO_CMD_STOP);
-  	}
+  	LL_GPIO_SetOutputPin(LED1_GPIO_Port, LED1_Pin);
   }
 }
 
 static uint8_t USBD_AUDIO_IsoINIncomplete(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
+	USBD_AUDIO_HandleTypeDef* haudio = (USBD_AUDIO_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId];
+
 	if (epnum == FEEDBACK_EP_NUM)
 	{
-		USBD_LL_Transmit(pdev, FEEDBACK_EP_ADDR, (void*)&s_AudFbVal, FEEDBACK_PACKET_SIZE);
+		USBD_LL_Transmit(pdev, FEEDBACK_EP_ADDR, (uint8_t*)&haudio->feedback_value, FEEDBACK_PACKET_SIZE);
 	}
 
   return USBD_OK;
@@ -391,9 +420,11 @@ static uint8_t USBD_AUDIO_IsoINIncomplete(USBD_HandleTypeDef *pdev, uint8_t epnu
 
 static uint8_t USBD_AUDIO_IsoOutIncomplete(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
+	USBD_AUDIO_HandleTypeDef* haudio = (USBD_AUDIO_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId];
+
 	if (epnum == STREAMING_EP_NUM)
 	{
-		USBD_AUDIO_PrepareOUT(pdev, epnum, 0U);
+		USBD_LL_PrepareReceive(pdev, STREAMING_EP_ADDR, (uint8_t*)haudio->pkt_buf, USB_HS_MAX_PACKET_SIZE);
 	}
 
   return USBD_OK;
@@ -410,26 +441,75 @@ static uint8_t USBD_AUDIO_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
 
   if (epnum == STREAMING_EP_NUM)
   {
-    USBD_AUDIO_ItfTypeDef* audItf = pdev->pUserData[pdev->classId];
+    USBD_AUDIO_ItfTypeDef* itf = pdev->pUserData[pdev->classId];
 
-		if (haudio->aud_buf.size >= haudio->aud_buf.capacity >> 1U)
+    uint8_t stream_type = USBD_AUDIO_IsDoPStream(pdev);
+
+    if (stream_type != haudio->stream_type)
+    {
+    	haudio->stream_type = stream_type;
+			itf->AudioCmd(&stream_type, sizeof(stream_type), AUDIO_CMD_FORMAT);
+    }
+
+		uint32_t packetSize = USBD_LL_GetRxDataSize(pdev, epnum);
+
+		if (stream_type == AUDIO_FORMAT_PCM)
 		{
-			if (audItf->GetState() == ITF_STOPPED)
+			uint32_t* pDst = (uint32_t*)&haudio->aud_buf.mem[haudio->aud_buf.wr_ptr];
+			uint32_t* pSrc = haudio->pkt_buf;
+
+			for (uint32_t i = 0; i < (packetSize >> 2); ++i)
 			{
-				audItf->AudioCmd(NULL, 0, AUDIO_CMD_PLAY);
+				union
+				{
+					uint16_t x[2];
+					uint32_t y;
+				} tmp;
+
+				tmp.y = *pSrc++;
+				*pDst++ = (tmp.x[0] << 16) | tmp.x[1];
+
+				if (pDst == (uint32_t*)(haudio->aud_buf.mem + haudio->aud_buf.capacity))
+				{
+					pDst = (uint32_t*)haudio->aud_buf.mem;
+				}
 			}
-		}
-
-		USBD_AUDIO_PrepareOUT(pdev, epnum, 1U);
-
-		if (haudio->aud_buf.state == AB_OVFL)
-		{
-			LL_GPIO_SetOutputPin(LED2_GPIO_Port, LED2_Pin);
 		}
 		else
 		{
-			LL_GPIO_ResetOutputPin(LED2_GPIO_Port, LED2_Pin);
+
 		}
+
+//		// Split DSD channel
+//		for (uint16_t i = 0; i < packetSize; i += 8)
+//		{
+//			uint16_t frameOffset = haudio->aud_buf.wr_ptr + i;
+//			haudio->dsd_buf.ch0_mem[haudio->dsd_buf.wr_ptr] = *(uint16_t*)&haudio->aud_buf.mem[frameOffset + DOP_CH0_OFFSET];
+//			haudio->dsd_buf.ch1_mem[haudio->dsd_buf.wr_ptr] = *(uint16_t*)&haudio->aud_buf.mem[frameOffset + DOP_CH1_OFFSET];
+//
+//			if (++haudio->dsd_buf.wr_ptr == haudio->dsd_buf.capacity)
+//			{
+//				haudio->dsd_buf.wr_ptr = 0;
+//			}
+//		}
+
+		AudioBuffer_Recieve(&haudio->aud_buf, packetSize);
+
+		if ((itf->GetState() == ITF_STOPPED) && (haudio->aud_buf.size > haudio->aud_buf.capacity >> 1))
+		{
+			itf->AudioCmd(NULL, 0U, AUDIO_CMD_PLAY);
+		}
+
+		if (haudio->aud_buf.size > haudio->aud_buf.capacity - (haudio->aud_buf.capacity >> 2))
+		{
+			LL_GPIO_ResetOutputPin(LED3_GPIO_Port, LED3_Pin);
+		}
+		else
+		{
+			LL_GPIO_SetOutputPin(LED3_GPIO_Port, LED3_Pin);
+		}
+
+		USBD_LL_PrepareReceive(pdev, STREAMING_EP_ADDR, (uint8_t*)haudio->pkt_buf, USB_HS_MAX_PACKET_SIZE);
   }
 
   return USBD_OK;

@@ -46,8 +46,8 @@
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-extern void USBD_AUDIO_UpdateAudFbValue(USBD_HandleTypeDef* pdev);
 extern void USBD_AUDIO_Sync(USBD_HandleTypeDef *pdev);
+extern void USBD_AUDIO_UpdateFB(USBD_HandleTypeDef *pdev, uint32_t txCnt);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -56,7 +56,8 @@ extern void USBD_AUDIO_Sync(USBD_HandleTypeDef *pdev);
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern DMA_HandleTypeDef hdma_spi2_tx;
+extern DMA_HandleTypeDef hdma_spi1_tx;
+extern DMA_HandleTypeDef hdma_spi3_tx;
 extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 /* USER CODE BEGIN EV */
 extern USBD_HandleTypeDef hUsbDeviceHS;
@@ -201,47 +202,44 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles DMA1 stream4 global interrupt.
+  * @brief This function handles DMA1 stream5 global interrupt.
   */
-void DMA1_Stream4_IRQHandler(void)
+void DMA1_Stream5_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA1_Stream4_IRQn 0 */
-  /* USER CODE END DMA1_Stream4_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_spi2_tx);
-  /* USER CODE BEGIN DMA1_Stream4_IRQn 1 */
-  /* USER CODE END DMA1_Stream4_IRQn 1 */
+  /* USER CODE BEGIN DMA1_Stream5_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream5_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_spi3_tx);
+  /* USER CODE BEGIN DMA1_Stream5_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream5_IRQn 1 */
 }
 
 /**
-  * @brief This function handles TIM2 global interrupt.
+  * @brief This function handles TIM3 global interrupt.
   */
-void TIM2_IRQHandler(void)
+void TIM3_IRQHandler(void)
 {
-  /* USER CODE BEGIN TIM2_IRQn 0 */
-	USBD_AUDIO_UpdateAudFbValue(&hUsbDeviceHS);
-  /* USER CODE END TIM2_IRQn 0 */
-  /* USER CODE BEGIN TIM2_IRQn 1 */
-	LL_TIM_ClearFlag_UPDATE(TIM2);
-  /* USER CODE END TIM2_IRQn 1 */
-}
-
-/**
-  * @brief This function handles EXTI line[15:10] interrupts.
-  */
-void EXTI15_10_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
+  /* USER CODE BEGIN TIM3_IRQn 0 */
+	LL_TIM_ClearFlag_UPDATE(TIM3);
+  /* USER CODE END TIM3_IRQn 0 */
+  /* USER CODE BEGIN TIM3_IRQn 1 */
 	USBD_AUDIO_Sync(&hUsbDeviceHS);
-  /* USER CODE END EXTI15_10_IRQn 0 */
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_15) != RESET)
-  {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_15);
-    /* USER CODE BEGIN LL_EXTI_LINE_15 */
+  /* USER CODE END TIM3_IRQn 1 */
+}
 
-    /* USER CODE END LL_EXTI_LINE_15 */
-  }
-  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
-  /* USER CODE END EXTI15_10_IRQn 1 */
+/**
+  * @brief This function handles DMA2 stream3 global interrupt.
+  */
+void DMA2_Stream3_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream3_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream3_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_spi1_tx);
+  /* USER CODE BEGIN DMA2_Stream3_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream3_IRQn 1 */
 }
 
 /**

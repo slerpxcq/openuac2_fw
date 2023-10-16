@@ -1,4 +1,3 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : usbd_audio_if.h
@@ -16,8 +15,6 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
-/* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __USBD_AUDIO_IF_H__
 #define __USBD_AUDIO_IF_H__
 
@@ -25,116 +22,24 @@
  extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
 #include "usbd_audio.h"
+#include <string.h>
 
-/* USER CODE BEGIN INCLUDE */
-
-/* USER CODE END INCLUDE */
-
-/** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
-  * @brief For Usb device.
-  * @{
-  */
-
-/** @defgroup USBD_AUDIO_IF USBD_AUDIO_IF
-  * @brief Usb audio interface device module.
-  * @{
-  */
-
-/** @defgroup USBD_AUDIO_IF_Exported_Defines USBD_AUDIO_IF_Exported_Defines
-  * @brief Defines.
-  * @{
-  */
-
-/* USER CODE BEGIN EXPORTED_DEFINES */
-
-/* USER CODE END EXPORTED_DEFINES */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_AUDIO_IF_Exported_Types USBD_AUDIO_IF_Exported_Types
-  * @brief Types.
-  * @{
-  */
-
-/* USER CODE BEGIN EXPORTED_TYPES */
-
-/* USER CODE END EXPORTED_TYPES */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_AUDIO_IF_Exported_Macros USBD_AUDIO_IF_Exported_Macros
-  * @brief Aliases.
-  * @{
-  */
-
-/* USER CODE BEGIN EXPORTED_MACRO */
 #define PLLI2SQ_48K		98304000UL
 #define PLLI2SQ_44K1	90316800UL
-/* USER CODE END EXPORTED_MACRO */
 
-/**
-  * @}
-  */
+#define AUDIO_I2S_MSTR_HANDLE				hi2s3
+#define AUDIO_I2S_SLAVE_HANDLE			hi2s1
+#define AUDIO_I2S_MSTR_DMA_HANDLE		hdma_spi3_tx
+#define AUDIO_I2S_SLAVE_DMA_HANDLE	hdma_spi1_tx
 
-/** @defgroup USBD_AUDIO_IF_Exported_Variables USBD_AUDIO_IF_Exported_Variables
-  * @brief Public variables.
-  * @{
-  */
-
-/** AUDIO_IF Interface callback. */
 extern USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops;
 
-/* USER CODE BEGIN EXPORTED_VARIABLES */
-
-/* USER CODE END EXPORTED_VARIABLES */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_AUDIO_IF_Exported_FunctionsPrototype USBD_AUDIO_IF_Exported_FunctionsPrototype
-  * @brief Public functions declaration.
-  * @{
-  */
-
-/**
-  * @brief  Manages the DMA full transfer complete event.
-  * @retval None
-  */
-void AUDIO_XferCpltCallback(void);
-
-/**
-  * @brief  Manages the DMA half transfer complete event.
-  * @retval None
-  */
-void AUDIO_XferHalfCallback(void);
-
-/* USER CODE BEGIN EXPORTED_FUNCTIONS */
 typedef enum _AudioItfState
 {
 	ITF_PLAYING,
 	ITF_STOPPED
 } AudioItfState;
-
-/* USER CODE END EXPORTED_FUNCTIONS */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
 
 #ifdef __cplusplus
 }

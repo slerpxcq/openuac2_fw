@@ -28,7 +28,6 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
-#include "stm32f4xx_ll_dma.h"
 #include "stm32f4xx_ll_rcc.h"
 #include "stm32f4xx_ll_bus.h"
 #include "stm32f4xx_ll_system.h"
@@ -36,13 +35,12 @@ extern "C" {
 #include "stm32f4xx_ll_cortex.h"
 #include "stm32f4xx_ll_utils.h"
 #include "stm32f4xx_ll_pwr.h"
+#include "stm32f4xx_ll_dma.h"
 #include "stm32f4xx_ll_tim.h"
-#include "stm32f4xx_ll_usart.h"
 #include "stm32f4xx_ll_gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "stm32f4xx_ll_spi.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -68,10 +66,16 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LED1_Pin LL_GPIO_PIN_13
-#define LED1_GPIO_Port GPIOC
-#define LED2_Pin LL_GPIO_PIN_14
-#define LED2_GPIO_Port GPIOC
+#define TEST_Pin LL_GPIO_PIN_0
+#define TEST_GPIO_Port GPIOA
+#define LED1_Pin LL_GPIO_PIN_14
+#define LED1_GPIO_Port GPIOB
+#define LED2_Pin LL_GPIO_PIN_15
+#define LED2_GPIO_Port GPIOB
+#define LED3_Pin LL_GPIO_PIN_6
+#define LED3_GPIO_Port GPIOC
+#define DSDOE_Pin LL_GPIO_PIN_11
+#define DSDOE_GPIO_Port GPIOC
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

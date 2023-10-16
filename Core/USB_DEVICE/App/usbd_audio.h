@@ -42,11 +42,18 @@ extern "C" {
   * @{
   */
 
+#define DOP_CH0_OFFSET																1U
+#define DOP_CH1_OFFSET																5U
+
+#define AUDIO_DOP_DETECT_COUNT												16U
+
+#define AUDIO_SYNC_CLK_DIV														32U
+
 #define AUDIO_48K_FEEDBACK_VALUE											0x60000
 #define AUDIO_44K1_FEEDBACK_VALUE											0x58333
 
 #define AUDIO_MIN_FREQ																44100U
-#define AUDIO_MAX_FREQ																768000U
+#define AUDIO_MAX_FREQ																384000U
 #define	AUDIO_FREQ_RES																1U
 #define AUDIO_MIN_VOL																	0U
 #define AUDIO_MAX_VOL																	100U
@@ -70,7 +77,7 @@ extern "C" {
 #define FEEDBACK_PACKET_SIZE													4U
 
 #define AUDIO_BUFFER_PACKET_NUM												80U
-#define AUDIO_BUF_SIZE                        				40960U
+#define AUDIO_BUF_SIZE                        				(AUDIO_BUFFER_PACKET_NUM * (AUDIO_MAX_FREQ / 1000U))
 
 // Audio20 appendix definitions
 #define AUDIO_FUNCTION 																AUDIO
@@ -138,13 +145,19 @@ extern "C" {
 /* Audio Commands enumeration */
 typedef enum
 {
-  AUDIO_CMD_START = 1,
   AUDIO_CMD_PLAY,
+	AUDIO_CMD_FORMAT,
   AUDIO_CMD_STOP,
 	AUDIO_CMD_FREQ,
 	AUDIO_CMD_MUTE,
 	AUDIO_CMD_VOLUME,
 } AUDIO_CMD_TypeDef;
+
+typedef enum
+{
+	AUDIO_FORMAT_PCM,
+	AUDIO_FORMAT_DSD
+} AUDIO_FORMAT_Typedef;
 
 /**
   * @}
@@ -154,6 +167,7 @@ typedef enum
 /** @defgroup USBD_CORE_Exported_TypesDefinitions
   * @{
   */
+
 typedef struct
 {
   uint8_t data[USB_MAX_EP0_SIZE];
@@ -165,11 +179,14 @@ typedef struct
 typedef struct
 {
   USBD_AUDIO_ControlTypeDef control;
+  uint32_t pkt_buf[USB_HS_MAX_PACKET_SIZE >> 2];
   AudioBuffer aud_buf;
   uint32_t alt_setting;
   uint32_t sam_freq;
-  uint32_t packet_size;
+  uint32_t feedback_base;
+  uint32_t feedback_value;
   uint8_t bit_depth;
+  uint8_t stream_type;
 } USBD_AUDIO_HandleTypeDef;
 
 typedef struct
@@ -212,6 +229,8 @@ uint8_t USBD_AUDIO_RegisterInterface(USBD_HandleTypeDef *pdev,
                                      USBD_AUDIO_ItfTypeDef *fops);
 
 void USBD_AUDIO_Sync(USBD_HandleTypeDef *pdev);
+
+#define CLAMP(x, y, z) ((x) < (y) ? (y) : (x) > (z) ? (z) : (x))
 
 #ifdef USE_USBD_COMPOSITE
 uint32_t USBD_AUDIO_GetEpPcktSze(USBD_HandleTypeDef *pdev, uint8_t If, uint8_t Ep);
