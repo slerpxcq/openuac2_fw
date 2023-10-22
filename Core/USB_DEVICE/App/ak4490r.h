@@ -115,5 +115,6 @@ typedef struct __attribute__ ((packed))
 
 uint8_t AK4490R_Init();
 uint8_t AK4490R_SetVolume(uint8_t vol);
+uint8_t AK4490R_SetMute(uint8_t vol);
 
 #endif // _AK4490R_H_

@@ -21,7 +21,19 @@ USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops =
   AUDIO_GetState,
 };
 
-static void AUDIO_SetSamFreq(uint32_t freq)
+AUDIO_CodecTypeDef codec =
+{
+	AK4490R_Init,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	AK4490R_SetMute,
+	AK4490R_SetVolume
+};
+
+static void I2S_SetFreq(uint32_t freq)
 {
 	__HAL_I2S_DISABLE(&AUDIO_I2S_MSTR_HANDLE);
 	LL_RCC_PLLI2S_Disable();
@@ -46,12 +58,21 @@ static void AUDIO_SetSamFreq(uint32_t freq)
 
 static uint8_t AUDIO_Init()
 {
-	AK4490R_Init();
+	if (codec.Init != NULL)
+	{
+		codec.Init();
+	}
+
   return USBD_OK;
 }
 
 static uint8_t AUDIO_DeInit()
 {
+	if (codec.DeInit != NULL)
+	{
+		codec.DeInit();
+	}
+
   return USBD_OK;
 }
 
@@ -63,11 +84,19 @@ static uint8_t AUDIO_AudioCmd(uint8_t* pbuf, uint32_t size, uint8_t cmd)
   switch (cmd)
   {
 	case AUDIO_CMD_PLAY:
+		if (codec.Play != NULL)
+		{
+			codec.Play();
+		}
 		HAL_I2S_Transmit_DMA(&AUDIO_I2S_MSTR_HANDLE, (uint16_t*)aud_buf->mem, aud_buf->capacity >> 2);
 		LL_GPIO_ResetOutputPin(LED2_GPIO_Port, LED2_Pin);
 		break;
 
 	case AUDIO_CMD_FORMAT:
+		if (codec.Format != NULL)
+		{
+			codec.Format(haudio->stream_type);
+		}
 		if (haudio->stream_type == AUDIO_FORMAT_DSD)
 		{
 			HAL_I2S_DMAStop(&AUDIO_I2S_MSTR_HANDLE);
@@ -85,6 +114,10 @@ static uint8_t AUDIO_AudioCmd(uint8_t* pbuf, uint32_t size, uint8_t cmd)
 		break;
 
 	case AUDIO_CMD_STOP:
+		if (codec.Stop != NULL)
+		{
+			codec.Stop();
+		}
 		HAL_I2S_DMAStop(&AUDIO_I2S_SLAVE_HANDLE);
 		HAL_I2S_DMAStop(&AUDIO_I2S_MSTR_HANDLE);
 		LL_GPIO_SetOutputPin(LED2_GPIO_Port, LED2_Pin);
@@ -93,13 +126,25 @@ static uint8_t AUDIO_AudioCmd(uint8_t* pbuf, uint32_t size, uint8_t cmd)
 		break;
 
 	case AUDIO_CMD_FREQ:
-		AUDIO_SetSamFreq(*(uint32_t*)pbuf);
+		if (codec.Freq != NULL)
+		{
+			codec.Freq(*(uint32_t*)pbuf);
+		}
+		I2S_SetFreq(*(uint32_t*)pbuf);
 		break;
 
 	case AUDIO_CMD_MUTE:
+		if (codec.Mute != NULL)
+		{
+			codec.Mute(*pbuf);
+		}
 		break;
 
 	case AUDIO_CMD_VOLUME:
+		if (codec.Volume != NULL)
+		{
+			codec.Volume(*pbuf);
+		}
 		break;
 
 	default:

@@ -23,7 +23,6 @@
 #endif
 
 #include "usbd_audio.h"
-#include <string.h>
 
 #define PLLI2SQ_48K		98304000UL
 #define PLLI2SQ_44K1	90316800UL
@@ -40,6 +39,18 @@ typedef enum _AudioItfState
 	ITF_PLAYING,
 	ITF_STOPPED
 } AudioItfState;
+
+typedef struct
+{
+	uint8_t (*Init)(void);
+	uint8_t (*DeInit)(void);
+	uint8_t (*Play)(void);
+	uint8_t (*Format)(uint8_t);
+	uint8_t (*Stop)(void);
+	uint8_t (*Freq)(uint32_t);
+	uint8_t (*Mute)(uint8_t);
+	uint8_t (*Volume)(uint8_t);
+} AUDIO_CodecTypeDef;
 
 #ifdef __cplusplus
 }

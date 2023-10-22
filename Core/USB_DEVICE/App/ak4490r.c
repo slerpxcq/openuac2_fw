@@ -10,19 +10,19 @@ uint8_t AK4490R_Init()
 	if (HAL_I2C_Mem_Write(&hi2c1, AK4490R_I2C_DEV_ADDR, AK4490R_CONTROL1_ADDR, I2C_MEMADD_SIZE_8BIT,
 				&tmp, 1, 0xffffffff) != HAL_OK)
 	{
-		return 0;
+		return 1;
 	}
 
 	tmp = AK4490R_ACKS | AK4490R_RSTN | AK4490R_DIF2 | AK4490R_DIF1 | AK4490R_DIF0;
 	if (HAL_I2C_Mem_Write(&hi2c1, AK4490R_I2C_DEV_ADDR, AK4490R_CONTROL1_ADDR, I2C_MEMADD_SIZE_8BIT,
 			&tmp, 1, 0xffffffff) != HAL_OK)
 	{
-		return 0;
+		return 1;
 	}
 
 //	AK4490R_SetVolume(255-40);
 
-	return 1;
+	return 0;
 }
 
 uint8_t AK4490R_SetVolume(uint8_t vol)
@@ -31,10 +31,15 @@ uint8_t AK4490R_SetVolume(uint8_t vol)
 	if (HAL_I2C_Mem_Write(&hi2c1, AK4490R_I2C_DEV_ADDR, AK4490R_LCH_ATT_ADDR, I2C_MEMADD_SIZE_8BIT,
 				(uint8_t*)&tmp, 2, 0xffffffff) != HAL_OK)
 	{
-		return 0;
+		return 1;
 	}
 
-	return 1;
+	return 0;
+}
+
+uint8_t AK4490R_SetMute(uint8_t mute)
+{
+	return 0;
 }
 
 
