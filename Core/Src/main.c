@@ -114,7 +114,6 @@ int main(void)
   LL_TIM_EnableIT_UPDATE(TIM3);
   LL_TIM_EnableCounter(TIM3);
 
-	AK4490R_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -401,8 +400,8 @@ static void MX_DMA_Init(void)
 {
 
   /* DMA controller clock enable */
-  __HAL_RCC_DMA2_CLK_ENABLE();
   __HAL_RCC_DMA1_CLK_ENABLE();
+  __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
   /* DMA1_Stream5_IRQn interrupt configuration */
@@ -431,10 +430,7 @@ static void MX_GPIO_Init(void)
   LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
 
   /**/
-  LL_GPIO_ResetOutputPin(TEST_GPIO_Port, TEST_Pin);
-
-  /**/
-  LL_GPIO_ResetOutputPin(DSDOE_GPIO_Port, DSDOE_Pin);
+  LL_GPIO_SetOutputPin(PDN_GPIO_Port, PDN_Pin);
 
   /**/
   LL_GPIO_SetOutputPin(GPIOB, LED1_Pin|LED2_Pin);
@@ -443,12 +439,15 @@ static void MX_GPIO_Init(void)
   LL_GPIO_SetOutputPin(LED3_GPIO_Port, LED3_Pin);
 
   /**/
-  GPIO_InitStruct.Pin = TEST_Pin;
+  LL_GPIO_ResetOutputPin(DSDOE_GPIO_Port, DSDOE_Pin);
+
+  /**/
+  GPIO_InitStruct.Pin = PDN_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(TEST_GPIO_Port, &GPIO_InitStruct);
+  LL_GPIO_Init(PDN_GPIO_Port, &GPIO_InitStruct);
 
   /**/
   GPIO_InitStruct.Pin = LED1_Pin|LED2_Pin;

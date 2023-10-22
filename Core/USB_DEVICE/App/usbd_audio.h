@@ -151,13 +151,19 @@ typedef enum
 	AUDIO_CMD_FREQ,
 	AUDIO_CMD_MUTE,
 	AUDIO_CMD_VOLUME,
-} AUDIO_CMD_TypeDef;
+} AUDIO_CommandTypeDef;
 
 typedef enum
 {
 	AUDIO_FORMAT_PCM,
 	AUDIO_FORMAT_DSD
-} AUDIO_FORMAT_Typedef;
+} AUDIO_FormatTypeDef;
+
+typedef enum
+{
+	AUDIO_STATE_STOPPED,
+	AUDIO_STATE_PLAYING,
+} AUDIO_StateTypeDef;
 
 /**
   * @}
@@ -181,20 +187,22 @@ typedef struct
   USBD_AUDIO_ControlTypeDef control;
   uint32_t pkt_buf[USB_HS_MAX_PACKET_SIZE >> 2];
   AudioBuffer aud_buf;
+  uint32_t buf_cap;
   uint32_t alt_setting;
   uint32_t sam_freq;
   uint32_t feedback_base;
   uint32_t feedback_value;
   uint8_t bit_depth;
   uint8_t stream_type;
+  uint8_t state;
 } USBD_AUDIO_HandleTypeDef;
 
 typedef struct
 {
-  int8_t (*Init)();
-  int8_t (*DeInit)();
-  int8_t (*AudioCmd)(uint8_t *pbuf, uint32_t size, uint8_t cmd);
-  int8_t (*GetState)();
+  uint8_t (*Init)();
+  uint8_t (*DeInit)();
+  uint8_t (*AudioCmd)(uint8_t* pbuf, uint32_t size, uint8_t cmd);
+  uint8_t (*GetState)();
 } USBD_AUDIO_ItfTypeDef;
 
 

@@ -13,9 +13,9 @@ typedef enum
 typedef struct
 {
 	uint8_t* mem;
-	int32_t capacity;
-	int32_t size;
-	int32_t wr_ptr;
+	uint32_t capacity;
+	uint32_t size;
+	uint32_t wr_ptr;
 	uint8_t state;
 } AudioBuffer;
 

@@ -1,11 +1,11 @@
 #include "ak4490r.h"
 #include "main.h"
-#include <stdio.h>
 
 extern I2C_HandleTypeDef hi2c1;
 
 uint8_t AK4490R_Init()
 {
+	LL_GPIO_ResetOutputPin(PDN_GPIO_Port, PDN_Pin);
 	uint8_t tmp = 0x00;
 	if (HAL_I2C_Mem_Write(&hi2c1, AK4490R_I2C_DEV_ADDR, AK4490R_CONTROL1_ADDR, I2C_MEMADD_SIZE_8BIT,
 				&tmp, 1, 0xffffffff) != HAL_OK)
