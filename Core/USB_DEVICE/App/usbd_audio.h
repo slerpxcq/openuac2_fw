@@ -42,12 +42,9 @@ extern "C" {
   * @{
   */
 
-#define DOP_CH0_OFFSET																1U
-#define DOP_CH1_OFFSET																5U
-
 #define AUDIO_DOP_DETECT_COUNT												16U
 
-#define AUDIO_SYNC_CLK_DIV														32U
+#define AUDIO_SYNC_CLK_DIV														16U
 
 #define AUDIO_48K_FEEDBACK_VALUE											0x60000
 #define AUDIO_44K1_FEEDBACK_VALUE											0x58333

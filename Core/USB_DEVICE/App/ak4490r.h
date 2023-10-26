@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 
-#define AK4490R_I2C_DEV_ADDR       0x20
+#define AK4490R_I2C_HANDLE				hi2c1
+
+#define AK4490R_I2C_DEV_ADDR       (0x10 << 1)
 #define AK4490R_CONTROL1_ADDR      0x00
 #define AK4490R_CONTROL2_ADDR      0x01
 #define AK4490R_CONTROL3_ADDR      0x02
@@ -115,6 +117,10 @@ typedef struct __attribute__ ((packed))
 
 uint8_t AK4490R_Init();
 uint8_t AK4490R_SetVolume(uint8_t vol);
-uint8_t AK4490R_SetMute(uint8_t vol);
+uint8_t AK4490R_SetMute(uint8_t mute);
+uint8_t AK4490R_SetFormat(uint8_t format);
+uint8_t AK4490R_Play();
+uint8_t AK4490R_Stop();
+void AK4490R_ProcessEvents();
 
 #endif // _AK4490R_H_

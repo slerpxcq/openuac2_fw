@@ -1,6 +1,5 @@
 #include "audio_buffer.h"
 #include "usbd_audio.h"
-#include <string.h>
 
 __attribute__ ((aligned (4))) static uint8_t s_AudBufMem[AUDIO_BUF_SIZE];
 
