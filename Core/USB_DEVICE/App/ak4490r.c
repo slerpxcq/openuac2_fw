@@ -4,7 +4,7 @@
 
 extern I2C_HandleTypeDef AK4490R_I2C_HANDLE;
 
-static uint8_t reg_reset;
+static uint8_t play;
 
 AUDIO_CodecTypeDef ak4490r_instance =
 {
@@ -48,6 +48,7 @@ uint8_t AK4490R_SetVolume(uint8_t vol)
 {
 	if (AK4490R_I2C_HANDLE.State == HAL_I2C_STATE_READY)
 	{
+		vol = (vol > 0) ? (vol + 155) : 0;
 		reg.lch_att = reg.rch_att = vol;
 		HAL_I2C_Mem_Write_IT(&AK4490R_I2C_HANDLE, AK4490R_I2C_DEV_ADDR, AK4490R_LCH_ATT_ADDR, I2C_MEMADD_SIZE_8BIT, (uint8_t*)&reg.lch_att, 2);
 	}
@@ -88,7 +89,7 @@ uint8_t AK4490R_SetFormat(uint8_t format)
 		}
 
 //		reg.control1 &= ~AK4490R_RSTN;
-		HAL_I2C_Mem_Write_IT(&AK4490R_I2C_HANDLE, AK4490R_I2C_DEV_ADDR, AK4490R_CONTROL1_ADDR, I2C_MEMADD_SIZE_8BIT, (uint8_t*)&reg.control1, 3);
+		HAL_I2C_Mem_Write_IT(&AK4490R_I2C_HANDLE, AK4490R_I2C_DEV_ADDR, AK4490R_CONTROL3_ADDR, I2C_MEMADD_SIZE_8BIT, (uint8_t*)&reg.control3, 1);
 //		reg_reset = 1;
 	}
 
@@ -97,30 +98,30 @@ uint8_t AK4490R_SetFormat(uint8_t format)
 
 uint8_t AK4490R_Play()
 {
+	play = 1;
 	return 0;
 }
 
 uint8_t AK4490R_Stop()
 {
+	if (AK4490R_I2C_HANDLE.State == HAL_I2C_STATE_READY)
+	{
+		reg.control2 |= AK4490R_SMUTE;
+	}
+
+	HAL_I2C_Mem_Write_IT(&AK4490R_I2C_HANDLE, AK4490R_I2C_DEV_ADDR, AK4490R_CONTROL2_ADDR, I2C_MEMADD_SIZE_8BIT, (uint8_t*)&reg.control2, 1);
 	return 0;
 }
 
 void AK4490R_ProcessEvents()
 {
-//	uint8_t ret;
-//
-//	if (reg_reset)
-//	{
-//		LL_mDelay(1);
-//		reg.control1 |= AK4490R_RSTN;
-//
-//		do
-//		{
-//			ret = HAL_I2C_Mem_Write(&AK4490R_I2C_HANDLE, AK4490R_I2C_DEV_ADDR, AK4490R_CONTROL1_ADDR, I2C_MEMADD_SIZE_8BIT, (uint8_t*)&reg.control1, 1, 0xffff);
-//		} while (ret != HAL_OK);
-//
-//		reg_reset = 0;
-//	}
+	if (play)
+	{
+		LL_mDelay(20);
+		reg.control2 &= ~AK4490R_SMUTE;
+		while (HAL_I2C_Mem_Write(&AK4490R_I2C_HANDLE, AK4490R_I2C_DEV_ADDR, AK4490R_CONTROL2_ADDR, I2C_MEMADD_SIZE_8BIT, (uint8_t*)&reg.control2, 1, 1000) != HAL_OK);
+		play = 0;
+	}
 }
 
 

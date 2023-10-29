@@ -14,6 +14,7 @@ void AudioBuffer_Reset(AudioBuffer* ab, uint32_t capacity)
 	ab->state = AB_OK;
 	ab->size = 0;
 	ab->wr_ptr = 0;
+	ab->rd_ptr = 0;
 	ab->capacity = capacity;
 }
 
@@ -45,6 +46,13 @@ uint8_t AudioBuffer_Sync(AudioBuffer* ab, uint32_t txSize)
 	if (ab->size >= txSize)
 	{
 		ab->size -= txSize;
+		ab->rd_ptr += txSize;
+
+		if (ab->rd_ptr >= ab->capacity)
+		{
+			ab->rd_ptr -= ab->capacity;
+		}
+
 		ab->state = AB_OK;
 	}
 	else

@@ -16,6 +16,7 @@ typedef struct
 	uint32_t capacity;
 	uint32_t size;
 	uint32_t wr_ptr;
+	uint32_t rd_ptr;
 	uint8_t state;
 } AudioBuffer;
 

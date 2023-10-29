@@ -397,6 +397,8 @@ void USBD_AUDIO_Sync(USBD_HandleTypeDef *pdev)
   if (haudio->aud_buf.size < haudio->aud_buf.capacity >> 2)
 	{
 		LL_GPIO_ResetOutputPin(LED1_GPIO_Port, LED1_Pin);
+		uint8_t tmp = 1;
+		itf->AudioCmd(&tmp, sizeof(tmp), AUDIO_CMD_MUTE);
 	}
   else
   {

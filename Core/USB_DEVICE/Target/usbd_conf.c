@@ -267,47 +267,10 @@ void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
   */
 USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 {
-  /* Init USB Ip. */
-  if (pdev->id == DEVICE_HS) {
-  /* Link the driver to the stack. */
-  hpcd_USB_OTG_HS.pData = pdev;
-  pdev->pData = &hpcd_USB_OTG_HS;
-
-  hpcd_USB_OTG_HS.Instance = USB_OTG_HS;
-	hpcd_USB_OTG_HS.Init.dev_endpoints = 8;
-	hpcd_USB_OTG_HS.Init.speed = PCD_SPEED_HIGH;
-	hpcd_USB_OTG_HS.Init.dma_enable = ENABLE;
-	hpcd_USB_OTG_HS.Init.phy_itface = USB_OTG_ULPI_PHY;
-	hpcd_USB_OTG_HS.Init.Sof_enable = DISABLE;
-	hpcd_USB_OTG_HS.Init.low_power_enable = DISABLE;
-	hpcd_USB_OTG_HS.Init.lpm_enable = DISABLE;
-	hpcd_USB_OTG_HS.Init.vbus_sensing_enable = DISABLE;
-	hpcd_USB_OTG_HS.Init.use_dedicated_ep1 = DISABLE;
-	hpcd_USB_OTG_HS.Init.use_external_vbus = DISABLE;
-  if (HAL_PCD_Init(&hpcd_USB_OTG_HS) != HAL_OK)
+  if (pdev->id == DEVICE_HS)
   {
-    Error_Handler();
-  }
-
-#if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)
-  /* Register USB PCD CallBacks */
-  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_HS, HAL_PCD_SOF_CB_ID, PCD_SOFCallback);
-  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_HS, HAL_PCD_SETUPSTAGE_CB_ID, PCD_SetupStageCallback);
-  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_HS, HAL_PCD_RESET_CB_ID, PCD_ResetCallback);
-  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_HS, HAL_PCD_SUSPEND_CB_ID, PCD_SuspendCallback);
-  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_HS, HAL_PCD_RESUME_CB_ID, PCD_ResumeCallback);
-  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_HS, HAL_PCD_CONNECT_CB_ID, PCD_ConnectCallback);
-  HAL_PCD_RegisterCallback(&hpcd_USB_OTG_HS, HAL_PCD_DISCONNECT_CB_ID, PCD_DisconnectCallback);
-
-  HAL_PCD_RegisterDataOutStageCallback(&hpcd_USB_OTG_HS, PCD_DataOutStageCallback);
-  HAL_PCD_RegisterDataInStageCallback(&hpcd_USB_OTG_HS, PCD_DataInStageCallback);
-  HAL_PCD_RegisterIsoOutIncpltCallback(&hpcd_USB_OTG_HS, PCD_ISOOUTIncompleteCallback);
-  HAL_PCD_RegisterIsoInIncpltCallback(&hpcd_USB_OTG_HS, PCD_ISOINIncompleteCallback);
-#endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
-
-  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_HS, 0x200);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 0, 0x80);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_HS, 1, 0x174);
+		hpcd_USB_OTG_HS.pData = pdev;
+		pdev->pData = &hpcd_USB_OTG_HS;
   }
 
   return USBD_OK;

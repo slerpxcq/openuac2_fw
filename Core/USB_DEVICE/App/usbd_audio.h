@@ -50,7 +50,7 @@ extern "C" {
 #define AUDIO_44K1_FEEDBACK_VALUE											0x58333
 
 #define AUDIO_MIN_FREQ																44100U
-#define AUDIO_MAX_FREQ																384000U
+#define AUDIO_MAX_FREQ																768000U
 #define	AUDIO_FREQ_RES																1U
 #define AUDIO_MIN_VOL																	0U
 #define AUDIO_MAX_VOL																	100U
@@ -73,10 +73,10 @@ extern "C" {
 
 #define FEEDBACK_PACKET_SIZE													4U
 
-#define AUDIO_BUFFER_PACKET_NUM												80U
+#define AUDIO_BUFFER_PACKET_NUM												40U
 #define AUDIO_BUF_SIZE                        				(AUDIO_BUFFER_PACKET_NUM * (AUDIO_MAX_FREQ / 1000U))
 
-// Audio20 appendix definitions
+/* Audio20 appendix definitions */
 #define AUDIO_FUNCTION 																AUDIO
 #define FUNCTION_SUBCLASS_UNDEFINED 									0x00
 #define FUNCTION_PROTOCOL_UNDEFINED										0x00
