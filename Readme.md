@@ -6,8 +6,8 @@ An open-source audio streaming bridge compatible with USB Audio 2.0 specificatio
 - Asynchronous feedback
 - Very low cost: no external programmable logic required
 - Easy interfacing with DACs
-- PCM supports: **44.1k, 48k, 88.2k, 96k, 176.4k, 192k, 352.8k, 384k, 705.6k, 768k**
-- DoP supports: **DSD64, DSD128, DSD256**
+- PCM supports: **44.1k, 48k, 88.2k, 96k, 176.4k, 192k, 352.8k, 384k, ~~705.6k, 768k~~** (Not tested).
+- ~~DoP supports: DSD64, DSD128, DSD256~~ (Stability issue, to be fixed)
 
 ## Current limitations
 - DSD native is unsupported due to driver
