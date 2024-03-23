@@ -88,9 +88,7 @@ uint8_t AK4490R_SetFormat(uint8_t format)
 			reg.control3 &= ~AK4490R_DP;
 		}
 
-//		reg.control1 &= ~AK4490R_RSTN;
 		HAL_I2C_Mem_Write_IT(&AK4490R_I2C_HANDLE, AK4490R_I2C_DEV_ADDR, AK4490R_CONTROL3_ADDR, I2C_MEMADD_SIZE_8BIT, (uint8_t*)&reg.control3, 1);
-//		reg_reset = 1;
 	}
 
 	return 0;

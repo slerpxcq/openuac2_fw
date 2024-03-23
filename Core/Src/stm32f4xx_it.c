@@ -47,7 +47,6 @@
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
 extern void USBD_AUDIO_Sync(USBD_HandleTypeDef *pdev);
-extern void USBD_AUDIO_UpdateFB(USBD_HandleTypeDef *pdev, uint32_t txCnt);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -254,7 +253,6 @@ void DMA2_Stream0_IRQHandler(void)
   /* USER CODE END DMA2_Stream0_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_memtomem_dma2_stream0);
   /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
-
   /* USER CODE END DMA2_Stream0_IRQn 1 */
 }
 

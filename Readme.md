@@ -22,3 +22,7 @@ These files contain the main work of this project
 - [audio_buffer.c](audio_buffer.c): Circular buffer
 - [usbd_audio_if.c](usbd_audio_if.c): Peripheral and external DAC interface
 
+## Note
+There is currently a bug in CubeMX: when using LL for RCC, the PLLCFGR is not configured correctly. A workaround is manually
+add ```RCC->PLLCFGR |= 1 << 16;``` before ```LL_RCC_PLL_Enable();``` after each code regeneration.
+

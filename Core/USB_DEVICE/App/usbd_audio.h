@@ -44,11 +44,16 @@ extern "C" {
 
 #define AUDIO_DOP_DETECT_COUNT												16U
 
-#define AUDIO_SYNC_CLK_DIV														16U
+// Sync
+//#define AUDIO_SYNC_CLK_DIV														64U
+#define AUDIO_SYNC_CLK_DIV														 (TIM3->ARR + 1)
 
+// Feedback
 #define AUDIO_48K_FEEDBACK_VALUE											0x60000
 #define AUDIO_44K1_FEEDBACK_VALUE											0x58333
+#define AUDIO_FEEDBACK_GAIN 8
 
+// Control
 #define AUDIO_MIN_FREQ																44100U
 #define AUDIO_MAX_FREQ																768000U
 #define	AUDIO_FREQ_RES																1U
@@ -72,6 +77,7 @@ extern "C" {
 #define AUDIO_REQ_RANGE																0x02U
 
 #define FEEDBACK_PACKET_SIZE													4U
+
 
 #define AUDIO_BUFFER_PACKET_NUM												40U
 #define AUDIO_BUF_SIZE                        				(AUDIO_BUFFER_PACKET_NUM * (AUDIO_MAX_FREQ / 1000U))
@@ -135,9 +141,9 @@ extern "C" {
 
 #define EP_GENERAL																		0x01
 
-#define SET_DATA(_ptr, _type, _value) \
+#define PACK_DATA(_ptr, _type, _value) do{\
 	*(_type*)_ptr = (_value); \
-	_ptr += sizeof(_type)
+	_ptr += sizeof(_type); } while(0)
 
 /* Audio Commands enumeration */
 typedef enum
@@ -182,9 +188,6 @@ typedef struct
 typedef struct
 {
   USBD_AUDIO_ControlTypeDef control;
-  uint32_t pkt_buf[USB_HS_MAX_PACKET_SIZE >> 2];
-  AudioBuffer aud_buf;
-  uint32_t buf_cap;
   uint32_t alt_setting;
   uint32_t sam_freq;
   uint32_t feedback_base;

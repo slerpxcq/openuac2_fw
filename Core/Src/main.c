@@ -22,7 +22,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usb_device.h"
-#include "usbd_conf.h"
 #include "ak4490r.h"
 /* USER CODE END Includes */
 
@@ -58,12 +57,12 @@ DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 void SystemClock_Config(void);
 void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USB_OTG_HS_PCD_Init(void);
-static void MX_I2C1_Init(void);
 static void MX_DMA_Init(void);
+static void MX_I2C1_Init(void);
 static void MX_I2S1_Init(void);
 static void MX_I2S3_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_USB_OTG_HS_PCD_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -80,7 +79,6 @@ static void MX_TIM3_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -89,7 +87,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -103,14 +100,16 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USB_OTG_HS_PCD_Init();
-  MX_I2C1_Init();
   MX_DMA_Init();
+  MX_I2C1_Init();
   MX_I2S1_Init();
   MX_I2S3_Init();
   MX_TIM3_Init();
+  MX_USB_OTG_HS_PCD_Init();
   /* USER CODE BEGIN 2 */
   MX_USB_DEVICE_Init();
+
+  // For LRCK counting for feedback
   LL_TIM_EnableIT_UPDATE(TIM3);
   LL_TIM_EnableCounter(TIM3);
   /* USER CODE END 2 */
@@ -337,7 +336,7 @@ static void MX_TIM3_Init(void)
   /* USER CODE END TIM3_Init 1 */
   TIM_InitStruct.Prescaler = 0;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 15;
+  TIM_InitStruct.Autoreload = 511;
   TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
   LL_TIM_Init(TIM3, &TIM_InitStruct);
   LL_TIM_DisableARRPreload(TIM3);
@@ -409,7 +408,7 @@ static void MX_DMA_Init(void)
   hdma_memtomem_dma2_stream0.Instance = DMA2_Stream0;
   hdma_memtomem_dma2_stream0.Init.Channel = DMA_CHANNEL_0;
   hdma_memtomem_dma2_stream0.Init.Direction = DMA_MEMORY_TO_MEMORY;
-  hdma_memtomem_dma2_stream0.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_memtomem_dma2_stream0.Init.PeriphInc = DMA_PINC_ENABLE;
   hdma_memtomem_dma2_stream0.Init.MemInc = DMA_MINC_ENABLE;
   hdma_memtomem_dma2_stream0.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
   hdma_memtomem_dma2_stream0.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
@@ -521,7 +520,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
-  LL_GPIO_ResetOutputPin(LED1_GPIO_Port, LED1_Pin);
+  NVIC_SystemReset();
   while (1)
   {
   }

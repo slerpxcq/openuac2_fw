@@ -5,7 +5,6 @@
 extern USBD_HandleTypeDef hUsbDeviceHS;
 extern I2S_HandleTypeDef AUDIO_I2S_MSTR_HANDLE;
 extern I2S_HandleTypeDef AUDIO_I2S_SLAVE_HANDLE;
-extern DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 
 static uint8_t AUDIO_Init();
 static uint8_t AUDIO_DeInit();
@@ -14,7 +13,6 @@ static uint8_t AUDIO_GetState();
 
 extern AUDIO_CodecTypeDef ak4490r_instance;
 static AUDIO_CodecTypeDef* codec = &ak4490r_instance;
-static uint32_t zero;
 
 USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops =
 {
@@ -29,7 +27,7 @@ static void RCC_I2S_SetFreq(uint32_t freq)
 	__HAL_I2S_DISABLE(&AUDIO_I2S_MSTR_HANDLE);
 	LL_RCC_PLLI2S_Disable();
 
-	if (freq % 48000U == 0)
+	if (freq % 44100U)
 	{
 		LL_RCC_PLLI2S_ConfigDomain_I2S(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLI2SM_DIV_16, 128, LL_RCC_PLLI2SR_DIV_2);
 		MODIFY_REG(AUDIO_I2S_MSTR_HANDLE.Instance->I2SPR, SPI_I2SPR_I2SDIV_Msk, (PLLI2SQ_48K / (freq << 7U)));
@@ -68,7 +66,7 @@ static uint8_t AUDIO_DeInit()
 static uint8_t AUDIO_AudioCmd(uint8_t* pbuf, uint32_t size, uint8_t cmd)
 {
 	USBD_AUDIO_HandleTypeDef* haudio = hUsbDeviceHS.pClassDataCmsit[hUsbDeviceHS.classId];
-	AudioBuffer* aud_buf = &haudio->aud_buf;
+	AudioBuffer* aud_buf = AudioBuffer_Instance();
 
   switch (cmd)
   {
@@ -90,14 +88,14 @@ static uint8_t AUDIO_AudioCmd(uint8_t* pbuf, uint32_t size, uint8_t cmd)
 		{
 			codec->Format(*pbuf);
 		}
-		if (*pbuf == AUDIO_FORMAT_DSD)
-		{
-			HAL_I2S_DMAStop(&AUDIO_I2S_MSTR_HANDLE);
-			RCC_I2S_SetFreq(haudio->sam_freq >> 2);
-			HAL_I2S_Transmit_DMA(&AUDIO_I2S_SLAVE_HANDLE, (uint16_t*)&aud_buf->mem[aud_buf->capacity], aud_buf->capacity >> 2);
-			HAL_I2S_Transmit_DMA(&AUDIO_I2S_MSTR_HANDLE, (uint16_t*)aud_buf->mem, aud_buf->capacity >> 2);
-			LL_GPIO_SetOutputPin(DSDOE_GPIO_Port, DSDOE_Pin);
-		}
+//		if (*pbuf == AUDIO_FORMAT_DSD)
+//		{
+//			HAL_I2S_DMAStop(&AUDIO_I2S_MSTR_HANDLE);
+//			RCC_I2S_SetFreq(haudio->sam_freq >> 2);
+//			HAL_I2S_Transmit_DMA(&AUDIO_I2S_SLAVE_HANDLE, (uint16_t*)&aud_buf->mem[aud_buf->capacity], aud_buf->capacity >> 2);
+//			HAL_I2S_Transmit_DMA(&AUDIO_I2S_MSTR_HANDLE, (uint16_t*)aud_buf->mem, aud_buf->capacity >> 2);
+//			LL_GPIO_SetOutputPin(DSDOE_GPIO_Port, DSDOE_Pin);
+//		}
 		break;
 
 	case AUDIO_CMD_STOP:
@@ -107,7 +105,6 @@ static uint8_t AUDIO_AudioCmd(uint8_t* pbuf, uint32_t size, uint8_t cmd)
 		}
 		HAL_I2S_DMAStop(&AUDIO_I2S_SLAVE_HANDLE);
 		HAL_I2S_DMAStop(&AUDIO_I2S_MSTR_HANDLE);
-//		HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0, (uint32_t)&zero, (uint32_t)aud_buf->mem, aud_buf->capacity >> 1);
 		LL_GPIO_SetOutputPin(LED2_GPIO_Port, LED2_Pin);
 		LL_GPIO_SetOutputPin(LED3_GPIO_Port, LED3_Pin);
 		LL_GPIO_ResetOutputPin(DSDOE_GPIO_Port, DSDOE_Pin);
