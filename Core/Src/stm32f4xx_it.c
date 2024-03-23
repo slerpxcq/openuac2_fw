@@ -56,6 +56,7 @@ extern void USBD_AUDIO_Sync(USBD_HandleTypeDef *pdev);
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
+extern DMA_HandleTypeDef hdma_memtomem_dma2_stream1;
 extern I2C_HandleTypeDef hi2c1;
 extern DMA_HandleTypeDef hdma_spi1_tx;
 extern DMA_HandleTypeDef hdma_spi3_tx;

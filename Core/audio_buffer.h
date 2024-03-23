@@ -23,11 +23,11 @@ typedef struct
 //public:
 AudioBuffer* AudioBuffer_Instance();
 uint8_t AudioBuffer_GetState();
-void AudioBuffer_Init(uint32_t);
-void AudioBuffer_Reset(uint32_t);
-void AudioBuffer_Recieve(uint32_t);
-void AudioBuffer_Sync(uint32_t);
+void AudioBuffer_Init(AudioBuffer* ab, uint32_t);
+void AudioBuffer_Reset(AudioBuffer* ab, uint32_t);
+void AudioBuffer_Recieve(AudioBuffer* ab, uint32_t);
+void AudioBuffer_Sync(AudioBuffer* ab, uint32_t);
 
-#define AudioBuffer_WrPtr() (&AudioBuffer_Instance()->mem[AudioBuffer_Instance()->wr_ptr])
+#define AudioBuffer_WrPtr(ab) (&(ab)->mem[(ab)->wr_ptr])
 
 #endif // _AUDIO_BUFFER_H_

@@ -65,7 +65,6 @@ static uint8_t AUDIO_DeInit()
 
 static uint8_t AUDIO_AudioCmd(uint8_t* pbuf, uint32_t size, uint8_t cmd)
 {
-	USBD_AUDIO_HandleTypeDef* haudio = hUsbDeviceHS.pClassDataCmsit[hUsbDeviceHS.classId];
 	AudioBuffer* aud_buf = AudioBuffer_Instance();
 
   switch (cmd)

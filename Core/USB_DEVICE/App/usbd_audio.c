@@ -26,7 +26,7 @@ static void AUDIO_REQ_SetCurrent(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef 
 static void AUDIO_REQ_GetRange(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 static void *USBD_AUDIO_GetAudioHeaderDesc(uint8_t *pConfDesc);
 
-static USBD_AUDIO_HandleTypeDef s_Haudio;
+static USBD_AUDIO_HandleTypeDef s_haudio;
 
 USBD_ClassTypeDef USBD_AUDIO =
 {
@@ -71,7 +71,7 @@ static void USBD_AUDIO_UpdateFeedbackValue(USBD_HandleTypeDef *pdev)
 
 	// The feedback value is calculated as the difference between current buffer size and half of buffer capacity
 	// The gain may need to be tuned to stabilize the loop
-	int64_t tmp = ((int64_t)AudioBuffer_Instance()->size - (AudioBuffer_Instance()->capacity >> 1)) * AUDIO_FEEDBACK_GAIN;
+	int64_t tmp = ((int64_t)haudio->aud_buf->size - (haudio->aud_buf->capacity >> 1)) * AUDIO_FEEDBACK_GAIN;
 
 	// Need to be clamped to meet Windows driver requirements. If the value is out of range, it will be ignored
 	tmp = CLAMP(tmp, -(1<<16), (1<<16)-1);
@@ -82,7 +82,8 @@ static uint8_t USBD_AUDIO_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
   UNUSED(cfgidx);
 
-  USBD_AUDIO_HandleTypeDef* haudio = &s_Haudio;
+  USBD_AUDIO_HandleTypeDef* haudio = &s_haudio;
+  haudio->aud_buf = AudioBuffer_Instance();
 
   pdev->pClassDataCmsit[pdev->classId] = haudio;
   pdev->pClassData = pdev->pClassDataCmsit[pdev->classId];
@@ -106,7 +107,7 @@ static uint8_t USBD_AUDIO_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 
   haudio->alt_setting = 0;
   haudio->stream_type = AUDIO_FORMAT_PCM;
-  AudioBuffer_Init(0);
+  AudioBuffer_Init(haudio->aud_buf, 0);
 
   /* Initialize the Audio output Hardware layer */
   USBD_AUDIO_ItfTypeDef* itf = pdev->pUserData[pdev->classId];
@@ -116,7 +117,7 @@ static uint8_t USBD_AUDIO_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
   }
 
   /* Prepare Out endpoint to receive 1st packet */
-  USBD_LL_PrepareReceive(pdev, STREAMING_EP_ADDR, AudioBuffer_WrPtr(), USB_HS_MAX_PACKET_SIZE);
+  USBD_LL_PrepareReceive(pdev, STREAMING_EP_ADDR, AudioBuffer_WrPtr(haudio->aud_buf), USB_HS_MAX_PACKET_SIZE);
   USBD_LL_Transmit(pdev, FEEDBACK_EP_ADDR, (uint8_t*)&haudio->feedback_value, FEEDBACK_PACKET_SIZE);
 
   return USBD_OK;
@@ -303,7 +304,7 @@ static uint8_t USBD_AUDIO_EP0_RxReady(USBD_HandleTypeDef *pdev)
 					(haudio->sam_freq / 1000U) :
 					(haudio->sam_freq / 147U * 160U / 1000U);
 
-			AudioBuffer_Reset(packetSize * AUDIO_BUFFER_PACKET_NUM);
+			AudioBuffer_Reset(haudio->aud_buf, packetSize * AUDIO_BUFFER_PACKET_NUM);
 
 			uint32_t multiplier;
 			if (haudio->sam_freq % 44100U) {
@@ -315,9 +316,6 @@ static uint8_t USBD_AUDIO_EP0_RxReady(USBD_HandleTypeDef *pdev)
 			}
 
 			// Set LRCK counter reload value
-			haudio->feedback_value = haudio->feedback_base;
-
-			//
 			TIM3->ARR = multiplier * AUDIO_AUTO_RELOAD_BASE;
 
 			itf->AudioCmd(haudio->control.data, haudio->control.len, AUDIO_CMD_FREQ);
@@ -379,18 +377,18 @@ void USBD_AUDIO_Sync(USBD_HandleTypeDef *pdev)
   	return;
   }
 
-  AudioBuffer_Sync(AUDIO_SYNC_CLK_DIV << 3);
+  AudioBuffer_Sync(haudio->aud_buf, AUDIO_SYNC_CLK_DIV << 3);
   USBD_AUDIO_UpdateFeedbackValue(pdev);
 
   // If the buffer is empty, stop playing
-  if ((AudioBuffer_Instance()->state == AB_UDFL) && (haudio->state == AUDIO_STATE_PLAYING))
+  if ((haudio->aud_buf->state == AB_UDFL) && (haudio->state == AUDIO_STATE_PLAYING))
 	{
 		itf->AudioCmd(NULL, 0, AUDIO_CMD_STOP);
 		//haudio->stream_type = AUDIO_FORMAT_PCM;
 		haudio->state = AUDIO_STATE_STOPPED;
 	}
 
-  if (AudioBuffer_Instance()->state == AB_UDFL)
+  if (haudio->aud_buf->state == AB_UDFL)
 		LL_GPIO_ResetOutputPin(LED1_GPIO_Port, LED1_Pin);
   else
   	LL_GPIO_SetOutputPin(LED1_GPIO_Port, LED1_Pin);
@@ -410,10 +408,11 @@ static uint8_t USBD_AUDIO_IsoINIncomplete(USBD_HandleTypeDef *pdev, uint8_t epnu
 
 static uint8_t USBD_AUDIO_IsoOutIncomplete(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
+	USBD_AUDIO_HandleTypeDef* haudio = pdev->pClassDataCmsit[pdev->classId];
 
 	if (epnum == STREAMING_EP_NUM)
 	{
-		USBD_LL_PrepareReceive(pdev, STREAMING_EP_ADDR, AudioBuffer_WrPtr(), USB_HS_MAX_PACKET_SIZE);
+		USBD_LL_PrepareReceive(pdev, STREAMING_EP_ADDR, AudioBuffer_WrPtr(haudio->aud_buf), USB_HS_MAX_PACKET_SIZE);
 	}
 
   return USBD_OK;
@@ -421,7 +420,7 @@ static uint8_t USBD_AUDIO_IsoOutIncomplete(USBD_HandleTypeDef *pdev, uint8_t epn
 
 static uint8_t USBD_AUDIO_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
-  USBD_AUDIO_HandleTypeDef* haudio = (USBD_AUDIO_HandleTypeDef *)pdev->pClassDataCmsit[pdev->classId];
+  USBD_AUDIO_HandleTypeDef* haudio = pdev->pClassDataCmsit[pdev->classId];
   USBD_AUDIO_ItfTypeDef* itf = pdev->pUserData[pdev->classId];
 
   if (haudio == NULL)
@@ -435,28 +434,28 @@ static uint8_t USBD_AUDIO_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
 
 		// Received data must be rotated due to I2S peripheral limitation.
 		// Not a problem for SAI
-		uint32_t* pSrc = (uint32_t*)AudioBuffer_WrPtr();
+		uint32_t* pSrc = (uint32_t*)AudioBuffer_WrPtr(haudio->aud_buf);
 		for (uint32_t i = 0; i < packetSize >> 2; ++i)
 		{
 			*pSrc = __ROR(*pSrc, 16);
 			++pSrc;
 		}
-		AudioBuffer_Recieve(packetSize);
+		AudioBuffer_Recieve(haudio->aud_buf, packetSize);
 
 		// if the states is stopped and the buffer is filled to half full, start playing.
-		if ((haudio->state == AUDIO_STATE_STOPPED) && (AudioBuffer_Instance()->size > AudioBuffer_Instance()->capacity >> 1))
+		if ((haudio->state == AUDIO_STATE_STOPPED) && (haudio->aud_buf->size > haudio->aud_buf->capacity >> 1))
 		{
 			itf->AudioCmd(NULL, 0, AUDIO_CMD_PLAY);
 			haudio->state = AUDIO_STATE_PLAYING;
 		}
 
 		// LED is set when the size of buffer is above 3/4 of capacity
-		if (AudioBuffer_Instance()->state == AB_OVFL)
+		if (haudio->aud_buf->state == AB_OVFL)
 			LL_GPIO_ResetOutputPin(LED3_GPIO_Port, LED3_Pin);
 		else
 			LL_GPIO_SetOutputPin(LED3_GPIO_Port, LED3_Pin);
 
-		USBD_LL_PrepareReceive(pdev, STREAMING_EP_ADDR, AudioBuffer_WrPtr(), USB_HS_MAX_PACKET_SIZE);
+		USBD_LL_PrepareReceive(pdev, STREAMING_EP_ADDR, AudioBuffer_WrPtr(haudio->aud_buf), USB_HS_MAX_PACKET_SIZE);
   }
 
   return USBD_OK;

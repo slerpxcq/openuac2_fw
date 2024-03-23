@@ -34,7 +34,7 @@
 
 extern USBD_AUDIO_ItfTypeDef USBD_AUDIO_fops;
 
-typedef enum _AudioItfState
+typedef enum
 {
 	ITF_PLAYING,
 	ITF_STOPPED

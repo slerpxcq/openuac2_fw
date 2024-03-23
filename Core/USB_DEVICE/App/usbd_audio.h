@@ -45,9 +45,8 @@ extern "C" {
 #define AUDIO_DOP_DETECT_COUNT												16U
 
 // Sync
-//#define AUDIO_SYNC_CLK_DIV														64U
 #define AUDIO_SYNC_CLK_DIV														 (TIM3->ARR + 1)
-#define AUDIO_AUTO_RELOAD_BASE                        80
+#define AUDIO_AUTO_RELOAD_BASE                        100
 
 // Feedback
 #define AUDIO_48K_FEEDBACK_VALUE											0x60000
@@ -189,6 +188,7 @@ typedef struct
 typedef struct
 {
   USBD_AUDIO_ControlTypeDef control;
+  AudioBuffer* aud_buf;
   uint32_t alt_setting;
   uint32_t sam_freq;
   uint32_t feedback_base;
