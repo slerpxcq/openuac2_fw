@@ -236,7 +236,9 @@ const uint8_t USBD_AUDIO_CfgDesc[USB_AUDIO_CONFIG_DESC_SIZE] __attribute__ ((ali
 	STREAMING_EP_ADDR,						// bEndpointAddress
 	STREAMING_EP_ATTRIB,					// bmAttributes
 	LOBYTE(USB_HS_MAX_PACKET_SIZE),				// wMaxPacketSize
-	HIBYTE(USB_HS_MAX_PACKET_SIZE),
+	// (2<<11) for 2 additional transaction per microframe (to support 768kHz);
+	// See USB spec Table 9-13
+	HIBYTE((2<<11)|USB_HS_MAX_PACKET_SIZE),
 	STREAMING_HS_BINTERVAL,						// bInterval
 
 	// Class specific

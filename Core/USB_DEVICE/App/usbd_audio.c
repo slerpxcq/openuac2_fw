@@ -305,12 +305,20 @@ static uint8_t USBD_AUDIO_EP0_RxReady(USBD_HandleTypeDef *pdev)
 
 			AudioBuffer_Reset(packetSize * AUDIO_BUFFER_PACKET_NUM);
 
-			// Set feedback value base
-			haudio->feedback_base = (haudio->sam_freq % 44100U) ?
-					haudio->sam_freq / 48000U * AUDIO_48K_FEEDBACK_VALUE:
-					haudio->sam_freq / 44100U * AUDIO_44K1_FEEDBACK_VALUE;
+			uint32_t multiplier;
+			if (haudio->sam_freq % 44100U) {
+					multiplier = haudio->sam_freq / 48000U;
+					haudio->feedback_base = multiplier * AUDIO_48K_FEEDBACK_VALUE;
+			} else {
+				multiplier = haudio->sam_freq / 44100U;
+				haudio->feedback_base = multiplier * AUDIO_44K1_FEEDBACK_VALUE;
+			}
 
+			// Set LRCK counter reload value
 			haudio->feedback_value = haudio->feedback_base;
+
+			//
+			TIM3->ARR = multiplier * AUDIO_AUTO_RELOAD_BASE;
 
 			itf->AudioCmd(haudio->control.data, haudio->control.len, AUDIO_CMD_FREQ);
 		}
@@ -382,15 +390,10 @@ void USBD_AUDIO_Sync(USBD_HandleTypeDef *pdev)
 		haudio->state = AUDIO_STATE_STOPPED;
 	}
 
-  // LED is set when the size of buffer is below 1/4 of capacity
-  if (AudioBuffer_Instance()->size < AudioBuffer_Instance()->capacity >> 2)
-	{
+  if (AudioBuffer_Instance()->state == AB_UDFL)
 		LL_GPIO_ResetOutputPin(LED1_GPIO_Port, LED1_Pin);
-	}
   else
-  {
   	LL_GPIO_SetOutputPin(LED1_GPIO_Port, LED1_Pin);
-  }
 }
 
 static uint8_t USBD_AUDIO_IsoINIncomplete(USBD_HandleTypeDef *pdev, uint8_t epnum)
@@ -448,7 +451,7 @@ static uint8_t USBD_AUDIO_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
 		}
 
 		// LED is set when the size of buffer is above 3/4 of capacity
-		if (AudioBuffer_Instance()->size > AudioBuffer_Instance()->capacity - (AudioBuffer_Instance()->capacity >> 2))
+		if (AudioBuffer_Instance()->state == AB_OVFL)
 			LL_GPIO_ResetOutputPin(LED3_GPIO_Port, LED3_Pin);
 		else
 			LL_GPIO_SetOutputPin(LED3_GPIO_Port, LED3_Pin);

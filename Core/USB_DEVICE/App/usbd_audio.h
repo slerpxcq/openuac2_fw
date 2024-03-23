@@ -47,11 +47,12 @@ extern "C" {
 // Sync
 //#define AUDIO_SYNC_CLK_DIV														64U
 #define AUDIO_SYNC_CLK_DIV														 (TIM3->ARR + 1)
+#define AUDIO_AUTO_RELOAD_BASE                        80
 
 // Feedback
 #define AUDIO_48K_FEEDBACK_VALUE											0x60000
 #define AUDIO_44K1_FEEDBACK_VALUE											0x58333
-#define AUDIO_FEEDBACK_GAIN 8
+#define AUDIO_FEEDBACK_GAIN                           8
 
 // Control
 #define AUDIO_MIN_FREQ																44100U
